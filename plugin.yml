@@ -1,0 +1,36 @@
+name: BelvensTeams
+main: belven.teams.TeamManager
+version: 1
+
+commands:
+   bt:
+      description: This gives the players all team functions
+      usage: /bt
+      permission: BelvensTeams.bt
+      permission-message: You don't have BelvensTeams.bt
+   listteams:
+      description: Lists all the current Teams that are open
+      usage: /listTeams 
+      permission: BelvensTeams.listTeams
+      permission-message: You don't have BelvensTeams.listTeams
+   listmembers:
+      description: Lists all the current Teams members and rank
+      usage: /listmembers 
+      permission: BelvensTeams.listmembers
+      permission-message: You don't have BelvensTeams.listmembers
+permissions:
+    BelvensTeams.*:
+        description: Gives access to all of BelvensTeams commands
+        children:
+            BelvensTeams.bt: true
+            BelvensTeams.listTeams: true
+            BelvensTeams.listmembers: true
+    BelvensTeams.bt:
+        description: This gives the players all team functions
+        default: true
+    BelvensTeams.listteams:
+        description: Lists all the current Teams that are open
+        default: true
+    BelvensTeams.listmembers:
+        description: Lists all the current Teams members and rank
+        default: true
