@@ -2,15 +2,22 @@ package belven.teams;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import belven.teams.listeners.PlayerListener;
 
 public class TeamManager extends JavaPlugin
 {
     public List<Team> CurrentTeams = new ArrayList<Team>();
+    private final PlayerListener playerListener = new PlayerListener(this);
 
     public enum TeamRank
     {
@@ -20,7 +27,49 @@ public class TeamManager extends JavaPlugin
     @Override
     public void onEnable()
     {
+        PluginManager pm = getServer().getPluginManager();
+        pm.registerEvents(playerListener, this);
+        RecreateTeams();
+    }
 
+    public void RecreateTeams()
+    {
+        reloadConfig();
+        for (String s : getConfig().getKeys(false))
+        {
+            getLogger().info(s);
+            Team t = new Team(this, s);
+
+            t.friendlyFire = getConfig().getBoolean(
+                    t.teamName + ".FriendlyFire");
+            t.isOpen = getConfig().getBoolean(t.teamName + ".Open");
+        }
+    }
+
+    public void AddPlayerToTeam(Player p)
+    {
+        for (Team t : CurrentTeams)
+        {
+            Set<String> teamPlayers = getConfig().getConfigurationSection(
+                    t.teamName + ".Players").getKeys(false);
+            for (String tp : teamPlayers)
+            {
+                getLogger().info("Player found " + tp);
+
+                if (p.getUniqueId().equals(UUID.fromString(tp)))
+                {
+                    getLogger().info(
+                            "Player " + p.getName() + " was added to team "
+                                    + t.teamName);
+
+                    String something = getConfig().getString(
+                            t.teamName + ".Players." + tp);
+
+                    getLogger().info("Player was givin Rank: " + something);
+                    t.Add(p, TeamRank.valueOf(something));
+                }
+            }
+        }
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label,
@@ -31,6 +80,11 @@ public class TeamManager extends JavaPlugin
 
         if (commandSent.equalsIgnoreCase("bt"))
         {
+            if (args.length < 1)
+            {
+                return false;
+            }
+
             if (args[0].equalsIgnoreCase("jt")
                     || args[0].equalsIgnoreCase("jointeam"))
             {
@@ -92,8 +146,35 @@ public class TeamManager extends JavaPlugin
             listMembers(p);
             return true;
         }
+        else if (commandSent.equalsIgnoreCase("t")
+                || commandSent.equalsIgnoreCase("team"))
+        {
+            SendTeamChat(p, args);
+            return true;
+        }
 
         return true;
+    }
+
+    private void SendTeamChat(Player p, String[] args)
+    {
+        if (isInATeam(p))
+        {
+            Team t = getTeam(p);
+
+            String message = "";
+
+            for (String s : args)
+            {
+                message += s + " ";
+            }
+
+            for (Player pl : t.getMembers())
+            {
+                pl.sendMessage(ChatColor.BLUE + message);
+            }
+        }
+
     }
 
     private String setfriendlyFire(Player p, String bool)
@@ -105,6 +186,8 @@ public class TeamManager extends JavaPlugin
             {
                 boolean friendlyFire = Boolean.valueOf(bool);
                 t.friendlyFire = friendlyFire;
+
+                getConfig().set(t.teamName + ".FriendlyFire", friendlyFire);
                 return "Team "
                         + t.teamName
                         + " is now "
@@ -126,7 +209,7 @@ public class TeamManager extends JavaPlugin
         {
             if (t.isOpen)
             {
-                p.sendMessage("You have join Team: " + getTeam(p).teamName);
+                p.sendMessage("You have joined Team: " + tn);
                 return AddPlayerToTeam(p, t);
             }
             else
@@ -171,6 +254,9 @@ public class TeamManager extends JavaPlugin
             {
                 boolean open = Boolean.valueOf(bool);
                 t.isOpen = open;
+
+                getConfig().set(t.teamName + ".Open", open);
+
                 return "Team " + t.teamName + " is now "
                         + (open ? "Open" : "Closed");
             }
@@ -238,6 +324,12 @@ public class TeamManager extends JavaPlugin
         if (t != null && p != null)
         {
             t.Add(p, TeamRank.MEMBER);
+
+            for (Player pl : t.getMembers())
+            {
+                pl.sendMessage(p.getName() + " has joined the team!!");
+            }
+
             return true;
         }
 
@@ -283,6 +375,7 @@ public class TeamManager extends JavaPlugin
         return "You must be in a team to do this!!";
     }
 
+    @SuppressWarnings("deprecation")
     public Player getPlayerFromString(String pn)
     {
         for (Player p : getServer().getOnlinePlayers())
@@ -297,11 +390,16 @@ public class TeamManager extends JavaPlugin
 
     public String createTeam(Player p, String tn)
     {
+        reloadConfig();
         if (!deosTeamExist(tn) && !tn.isEmpty())
         {
             if (!isInATeam(p))
             {
-                new Team(this, tn, p);
+                Team t = new Team(this, tn, p);
+
+                getConfig().set(t.teamName + ".Open", t.isOpen);
+                getConfig().set(t.teamName + ".FriendlyFire", t.friendlyFire);
+
                 return "Team " + tn
                         + " was created and you are now the leader!!";
             }

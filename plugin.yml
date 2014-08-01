@@ -8,6 +8,11 @@ commands:
       usage: /bt
       permission: BelvensTeams.bt
       permission-message: You don't have BelvensTeams.bt
+   t:
+      description: Sends chat to team mates
+      usage: /t
+      permission: BelvensTeams.t
+      permission-message: You don't have BelvensTeams.t
    listteams:
       description: Lists all the current Teams that are open
       usage: /listTeams 
@@ -25,8 +30,12 @@ permissions:
             BelvensTeams.bt: true
             BelvensTeams.listTeams: true
             BelvensTeams.listmembers: true
+            BelvensTeams.t: true
     BelvensTeams.bt:
         description: This gives the players all team functions
+        default: true
+    BelvensTeams.t:
+        description: Sends chat to team mates
         default: true
     BelvensTeams.listteams:
         description: Lists all the current Teams that are open

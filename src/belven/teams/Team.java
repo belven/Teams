@@ -30,19 +30,19 @@ public class Team
 
         for (Player p : players)
         {
-            members.put(p, TeamRank.MEMBER);
+            Add(p, TeamRank.MEMBER);
         }
 
         if (players.size() > 0)
         {
-            members.put(players.get(0), TeamRank.LEADER);
+            Add(players.get(0), TeamRank.LEADER);
         }
     }
 
     public Team(TeamManager tm, String tn, Player p)
     {
         this(tm, tn);
-        members.put(p, TeamRank.LEADER);
+        Add(p, TeamRank.LEADER);
     }
 
     public boolean Contains(Player p)
@@ -53,6 +53,10 @@ public class Team
     public void RemoveMember(Player p)
     {
         members.remove(p);
+
+        plugin.reloadConfig();
+        plugin.getConfig().set(
+                teamName + ".Players." + p.getUniqueId().toString(), null);
     }
 
     public Set<Player> getMembers()
@@ -84,16 +88,23 @@ public class Team
 
     public void Leave(Player p)
     {
-        members.remove(p);
+        p.sendMessage("You have left " + teamName);
+        RemoveMember(p);
     }
 
     public void RemoveTeam()
     {
+        plugin.getConfig().set(teamName, null);
         plugin.CurrentTeams.remove(this);
     }
 
     public void Add(Player p, TeamRank tr)
     {
         members.put(p, tr);
+
+        plugin.reloadConfig();
+        plugin.getConfig().set(
+                teamName + ".Players." + p.getUniqueId().toString(),
+                tr.toString());
     }
 }

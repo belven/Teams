@@ -1,14 +1,14 @@
-package belven.teams;
+package belven.teams.listeners;
 
-import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
+
+import belven.teams.TeamManager;
 
 public class PlayerListener implements Listener
 {
@@ -28,7 +28,12 @@ public class PlayerListener implements Listener
         }
     }
 
-    @SuppressWarnings("deprecation")
+    @EventHandler
+    public void onPlayerLoginEvent(PlayerLoginEvent event)
+    {
+        plugin.AddPlayerToTeam(event.getPlayer());
+    }
+
     public void PlayerTakenDamage(EntityDamageByEntityEvent event)
     {
         Player damagedPlayer = (Player) event.getEntity();
@@ -39,25 +44,25 @@ public class PlayerListener implements Listener
         {
             damagerPlayer = (Player) event.getDamager();
         }
-        else if (damagerEntity.getType() == EntityType.ARROW)
-        {
-            Arrow currentArrow = (Arrow) damagerEntity;
-
-            if (currentArrow.getShooter().getType() == EntityType.PLAYER)
-            {
-                damagerPlayer = (Player) currentArrow.getShooter();
-            }
-        }
-        else if (damagerEntity.getType() == EntityType.FIREBALL)
-        {
-            Projectile currentFireball = (Projectile) damagerEntity;
-
-            if (currentFireball instanceof Fireball
-                    && currentFireball.getShooter().getType() == EntityType.PLAYER)
-            {
-                damagerPlayer = (Player) currentFireball.getShooter();
-            }
-        }
+        // else if (damagerEntity.getType() == EntityType.ARROW)
+        // {
+        // Arrow currentArrow = (Arrow) damagerEntity;
+        //
+        // if (currentArrow.getShooter().getType() == EntityType.PLAYER)
+        // {
+        // damagerPlayer = (Player) currentArrow.getShooter();
+        // }
+        // }
+        // else if (damagerEntity.getType() == EntityType.FIREBALL)
+        // {
+        // Projectile currentFireball = (Projectile) damagerEntity;
+        //
+        // if (currentFireball instanceof Fireball
+        // && currentFireball.getShooter().getType() == EntityType.PLAYER)
+        // {
+        // damagerPlayer = (Player) currentFireball.getShooter();
+        // }
+        // }
 
         if (damagerPlayer != null)
         {
