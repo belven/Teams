@@ -216,7 +216,7 @@ public class TeamManager extends JavaPlugin {
 
 				return "Team " + t.teamName + " is now " + (open ? "Open" : "Closed");
 			} else {
-				return "Only leaders can do this!!";
+				return "Only leaders can do this.";
 			}
 		}
 		return "You must be in a team to do this.";
@@ -235,7 +235,7 @@ public class TeamManager extends JavaPlugin {
 
 				return "Team " + t.teamName + " was removed";
 			} else {
-				return "Only leaders can do this!!";
+				return "Only leaders can do this.";
 			}
 		}
 		return "You must be in a team to do this.";
