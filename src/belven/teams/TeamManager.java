@@ -168,8 +168,7 @@ public class TeamManager extends JavaPlugin {
 			if (t.getRank(p) == TeamRank.LEADER) {
 				if (friendlyFire.containsKey(bool) || bool.equalsIgnoreCase("toggle")) {
 
-					t.friendlyFire = bool.equals("toggle") ? !t.friendlyFire : friendlyFire
-							.get(bool);
+					t.friendlyFire = bool.equals("toggle") ? !t.friendlyFire : friendlyFire.get(bool);
 
 					getConfig().set(t.teamName + ".FriendlyFire", friendlyFire);
 					return "Team " + t.teamName + " is now "
@@ -187,12 +186,13 @@ public class TeamManager extends JavaPlugin {
 
 	private boolean joinTeam(Player p, String tn) {
 		Team t = getTeam(tn);
+		
 		if (t != null) {
 			if (t.isOpen) {
 				p.sendMessage("You have joined Team: " + tn);
 				return AddPlayerToTeam(p, t);
 			} else {
-				p.sendMessage("You cannot join closed teams");
+				p.sendMessage("You cannot join closed teams.");
 				return true;
 			}
 		} else {
@@ -202,18 +202,7 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public boolean isInSameTeam(Player p1, Player p2) {
-		if (!isInATeam(p1) || !isInATeam(p2)) {
-			return false;
-		}
-
-		Team p1Team = getTeam(p1);
-		Team p2Team = getTeam(p2);
-
-		if (p1Team == p2Team) {
-			return true;
-		} else {
-			return false;
-		}
+		return isInATeam(p1) && isInATeam(p2) && getTeam(p1) == getTeam(p2);
 	}
 
 	public String setOpen(Player p, String bool) {
