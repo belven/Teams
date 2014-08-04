@@ -123,7 +123,6 @@ public class TeamManager extends JavaPlugin
         		removeTeam(p);
                 return true;
         		
-        		
         	}
         	return false;
         	
@@ -144,22 +143,23 @@ public class TeamManager extends JavaPlugin
         return false;
     }
 
-    private void SendTeamChat(Player p, String[] args)
-    {
-        if (isInATeam(p))
-        {
+    private void SendTeamChat(Player p, String[] args){
+    	
+        if (isInATeam(p)){
             Team t = getTeam(p);
+            
+            // Half a line
+            StringBuilder sb = new StringBuilder(50);
+            sb.append(ChatColor.BLUE);
 
-            String message = "";
-
-            for (String s : args)
-            {
-                message += s + " ";
+            for (String s : args){
+            	sb.append(s)
+            	  .append(' ');
             }
-
-            for (Player pl : t.getMembers())
-            {
-                pl.sendMessage(ChatColor.BLUE + message);
+            
+            String msg = sb.toString();
+            for (Player pl : t.getMembers()){
+                pl.sendMessage(msg);
             }
         }
 
