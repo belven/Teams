@@ -77,83 +77,71 @@ public class TeamManager extends JavaPlugin
     {
         Player p = (Player) sender;
         String commandSent = cmd.getName();
-
-        if (commandSent.equalsIgnoreCase("bt"))
-        {
-            if (args.length < 1)
-            {
-                return false;
-            }
-
-            if (args[0].equalsIgnoreCase("jt")
-                    || args[0].equalsIgnoreCase("jointeam"))
-            {
-                joinTeam(p, args[1]);
+        
+        switch(commandSent.toLowerCase()){
+        	
+        case "bt":
+        	switch(args[0].toLowerCase()){
+        	
+        	case "jt":
+        	case "jointeam":
+        		joinTeam(p, args[1]);
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("lt")
-                    || args[0].equalsIgnoreCase("leaveteam"))
-            {
-                leaveTeam(p);
+        		
+        	case "lt":
+        	case "leaveteam":
+        		leaveTeam(p);
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("ct")
-                    || args[0].equalsIgnoreCase("createteam"))
-            {
-                p.sendMessage(createTeam(p, args[1]));
+        		
+        	case "ct":
+        	case "createteam":
+        		p.sendMessage(createTeam(p, args[1]));
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("sl")
-                    || args[0].equalsIgnoreCase("setleader"))
-            {
-                p.sendMessage(setTeamLeader(p, args[1]));
+        		
+        	case "sl":
+        	case "setleader":
+        		p.sendMessage(setTeamLeader(p, args[1]));
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("so")
-                    || args[0].equalsIgnoreCase("setopen"))
-            {
-                p.sendMessage(setOpen(p, args[1]));
+        		
+        	case "so":
+        	case "setopen":
+        		p.sendMessage(setOpen(p, args[1]));
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("sff")
-                    || args[0].equalsIgnoreCase("setff"))
-            {
-                p.sendMessage(setfriendlyFire(p, args[1]));
+                
+        	case "sff":
+        	case "setff":
+        		p.sendMessage(setfriendlyFire(p, args[1]));
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("rm")
-                    || args[0].equalsIgnoreCase("removemember"))
-            {
-                p.sendMessage(removeMember(p, args[1]));
+        		
+        	case "rm":
+        	case "removemember":
+        		p.sendMessage(removeMember(p, args[1]));
                 return true;
-            }
-            else if (args[0].equalsIgnoreCase("rt")
-                    || args[0].equalsIgnoreCase("removeteam"))
-            {
-                removeTeam(p);
+        		
+        	case "rt":
+        	case "removeteam":
+        		removeTeam(p);
                 return true;
-            }
-        }
-        else if (commandSent.equalsIgnoreCase("lt")
-                || commandSent.equalsIgnoreCase("listteams"))
-        {
-            listTeams(p);
+        		
+        		
+        	}
+        	return false;
+        	
+        case "lt":
+        	listTeams(p);
             return true;
-        }
-        else if (commandSent.equalsIgnoreCase("lm")
-                || commandSent.equalsIgnoreCase("listmembers"))
-        {
-            listMembers(p);
+        	
+        case "lm":
+        	listMembers(p);
             return true;
-        }
-        else if (commandSent.equalsIgnoreCase("t")
-                || commandSent.equalsIgnoreCase("team"))
-        {
-            SendTeamChat(p, args);
+        	
+        case "t":
+        	SendTeamChat(p, args);
             return true;
+        
         }
 
-        return true;
+        return false;
     }
 
     private void SendTeamChat(Player p, String[] args)
