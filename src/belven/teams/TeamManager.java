@@ -74,11 +74,11 @@ public class TeamManager extends JavaPlugin {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		Player p = (Player) sender;
 		String commandSent = cmd.getName();
+		
+		if(!commandSent.toLowerCase().equals("bt")) return false;
 
-		switch (commandSent.toLowerCase()) {
+		switch (args[0].toLowerCase()) {
 
-		case "bt":
-			switch (args[0].toLowerCase()) {
 
 			case "jt":
 			case "jointeam":
@@ -108,7 +108,7 @@ public class TeamManager extends JavaPlugin {
 			case "sff":
 			case "setff":
 			case "setfriendlyfire":
-				p.sendMessage(setfriendlyFire(p, args[1]));
+				p.sendMessage(setFriendlyFire(p, args[1]));
 				return true;
 
 			case "rm":
@@ -121,20 +121,22 @@ public class TeamManager extends JavaPlugin {
 				removeTeam(p);
 				return true;
 
-			}
-			return false;
-
-		case "lt":
-			listTeams(p);
-			return true;
-
-		case "lm":
-			listMembers(p);
-			return true;
-
-		case "t":
-			SendTeamChat(p, args);
-			return true;
+			case "list":
+			case "lst":
+				listTeams(p);
+				return true;
+	
+			case "lm":
+			case "listmem":
+			case "listmembers":
+				listMembers(p);
+				return true;
+	
+			case "t":
+			case "c":
+			case "pm":
+				SendTeamChat(p, args);
+				return true;
 
 		}
 
@@ -162,7 +164,7 @@ public class TeamManager extends JavaPlugin {
 
 	}
 
-	private String setfriendlyFire(Player p, String bool) {
+	private String setFriendlyFire(Player p, String bool) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			if (t.getRank(p) == TeamRank.LEADER) {

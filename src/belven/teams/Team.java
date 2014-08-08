@@ -107,6 +107,6 @@ public class Team
         plugin.reloadConfig();
         plugin.getConfig().set(
                 teamName + ".Players." + p.getUniqueId().toString(),
-                tr.toString());
+                pData.get(p).toString());
     }
 }
