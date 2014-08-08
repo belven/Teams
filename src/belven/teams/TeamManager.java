@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import belven.teams.PlayerTeamData.CHATLVL;
 import belven.teams.listeners.PlayerListener;
 
 public class TeamManager extends JavaPlugin {
@@ -78,20 +79,21 @@ public class TeamManager extends JavaPlugin {
 		if(!commandSent.toLowerCase().equals("bt")) return false;
 
 		switch (args[0].toLowerCase()) {
-
-
 			case "jt":
 			case "jointeam":
+			case "join":
 				joinTeam(p, args[1]);
 				return true;
 
 			case "lt":
 			case "leaveteam":
+			case "leave":
 				leaveTeam(p);
 				return true;
 
 			case "ct":
 			case "createteam":
+			case "create":
 				p.sendMessage(createTeam(p, args[1]));
 				return true;
 
@@ -113,36 +115,51 @@ public class TeamManager extends JavaPlugin {
 
 			case "rm":
 			case "removemember":
+			case "kick":
 				p.sendMessage(removeMember(p, args[1]));
 				return true;
 
 			case "rt":
 			case "removeteam":
+			case "disband":
 				removeTeam(p);
 				return true;
 
 			case "list":
 			case "lst":
+			case "showteams":
+			case "teams":
 				listTeams(p);
 				return true;
 	
 			case "lm":
 			case "listmem":
 			case "listmembers":
+			case "members":
 				listMembers(p);
 				return true;
-	
+				
 			case "t":
 			case "c":
+			case "w":
 			case "pm":
 				SendTeamChat(p, args);
 				return true;
+				
+			case "teamchat":
+			case "tc":
+				getTeam(p).pData.get(p).chatLvl = CHATLVL.Team;
+				
+			case "globalchat":
+			case "gc":
+				getTeam(p).pData.get(p).chatLvl = CHATLVL.Global;
 
 		}
 
 		return false;
 	}
 
+	
 	private void SendTeamChat(Player p, String[] args) {
 
 		if (isInATeam(p) && args.length != 0) {
@@ -150,7 +167,7 @@ public class TeamManager extends JavaPlugin {
 
 			// Half a line
 			StringBuilder sb = new StringBuilder(50);
-			sb.append(ChatColor.BLUE);
+			sb.append(ChatColor.GREEN);
 
 			for (String s : args) {
 				sb.append(s).append(' ');
@@ -163,6 +180,7 @@ public class TeamManager extends JavaPlugin {
 		}
 
 	}
+	
 
 	private String setFriendlyFire(Player p, String bool) {
 		if (isInATeam(p)) {

@@ -5,8 +5,12 @@ import belven.teams.TeamManager.TeamRank;
 public class PlayerTeamData {
 	public static final String SEPERATOR = "@";
 	
+	public enum CHATLVL{
+		Global, Team;
+	}
+	
 	public TeamRank teamRank;
-	public int chatLvl = 0;
+	public CHATLVL chatLvl = CHATLVL.Global;
 	
 	public PlayerTeamData(){}
 	
