@@ -1,8 +1,6 @@
 package belven.teams;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -26,7 +24,7 @@ public class TeamManager extends JavaPlugin {
 		LEADER, MEMBER
 	}
 
-	private static HashMap<String, Boolean> friendlyFire;
+	private static HashMap<String, Boolean> friendlyFire = new HashMap<String, Boolean>();
 
 	static {
 		friendlyFire.put("on", true);
@@ -48,22 +46,26 @@ public class TeamManager extends JavaPlugin {
 			getLogger().info(s);
 			Team t = new Team(this, s);
 
-			t.friendlyFire = getConfig().getBoolean(t.teamName + ".FriendlyFire");
+			t.friendlyFire = getConfig().getBoolean(
+					t.teamName + ".FriendlyFire");
 			t.isOpen = getConfig().getBoolean(t.teamName + ".Open");
 		}
 	}
 
 	public void AddPlayerToTeam(Player p) {
 		for (Team t : CurrentTeams) {
-			Set<String> teamPlayers = getConfig().getConfigurationSection(t.teamName + ".Players")
-					.getKeys(false);
+			Set<String> teamPlayers = getConfig().getConfigurationSection(
+					t.teamName + ".Players").getKeys(false);
 			for (String tp : teamPlayers) {
 				getLogger().info("Player found " + tp);
 
 				if (p.getUniqueId().equals(UUID.fromString(tp))) {
-					getLogger().info("Player " + p.getName() + " was added to team " + t.teamName);
+					getLogger().info(
+							"Player " + p.getName() + " was added to team "
+									+ t.teamName);
 
-					String something = getConfig().getString(t.teamName + ".Players." + tp);
+					String something = getConfig().getString(
+							t.teamName + ".Players." + tp);
 
 					getLogger().info("Player was givin Rank: " + something);
 					t.Add(p, TeamRank.valueOf(something));
@@ -72,127 +74,142 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
-	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+	public boolean onCommand(CommandSender sender, Command cmd, String label,
+			String[] args) {
 		Player p = (Player) sender;
 		String commandSent = cmd.getName();
-		
-		if(!commandSent.toLowerCase().equals("bt")) return false;
 
-		switch (args[0].toLowerCase()) {
-			case "jt":
-			case "jointeam":
-			case "join":
-				joinTeam(p, args[1]);
-				return true;
-
-			case "lt":
-			case "leaveteam":
-			case "leave":
-				leaveTeam(p);
-				return true;
-
-			case "ct":
-			case "createteam":
-			case "create":
-				p.sendMessage(createTeam(p, args[1]));
-				return true;
-
-			case "sl":
-			case "setleader":
-				p.sendMessage(setTeamLeader(p, args[1]));
-				return true;
-
-			case "so":
-			case "setopen":
-				p.sendMessage(setOpen(p, args[1]));
-				return true;
-
-			case "sff":
-			case "setff":
-			case "setfriendlyfire":
-				p.sendMessage(setFriendlyFire(p, args[1]));
-				return true;
-
-			case "rm":
-			case "removemember":
-			case "kick":
-				p.sendMessage(removeMember(p, args[1]));
-				return true;
-
-			case "rt":
-			case "removeteam":
-			case "disband":
-				removeTeam(p);
-				return true;
-
-			case "list":
-			case "lst":
-			case "showteams":
-			case "teams":
-				listTeams(p);
-				return true;
-	
-			case "lm":
-			case "listmem":
-			case "listmembers":
-			case "members":
-				listMembers(p);
-				return true;
-				
-			case "t":
-			case "c":
-			case "w":
-			case "pm":
-				SendTeamChat(p, args);
-				return true;
-				
-			case "teamchat":
-			case "tc":
-				getTeam(p).pData.get(p).chatLvl = CHATLVL.Team;
-				
-			case "globalchat":
-			case "gc":
-				getTeam(p).pData.get(p).chatLvl = CHATLVL.Global;
-
+		if (!commandSent.toLowerCase().equals("bt")) {
+			return false;
 		}
 
+		switch (args[0].toLowerCase()) {
+		case "jt":
+		case "jointeam":
+		case "join":
+			joinTeam(p, args[1]);
+			return true;
+
+		case "lt":
+		case "leaveteam":
+		case "leave":
+			leaveTeam(p);
+			return true;
+
+		case "ct":
+		case "createteam":
+		case "create":
+			p.sendMessage(createTeam(p, args[1]));
+			return true;
+
+		case "sl":
+		case "setleader":
+			p.sendMessage(setTeamLeader(p, args[1]));
+			return true;
+
+		case "so":
+		case "setopen":
+			p.sendMessage(setOpen(p, args[1]));
+			return true;
+
+		case "sff":
+		case "setff":
+		case "setfriendlyfire":
+			p.sendMessage(setFriendlyFire(p, args[1]));
+			return true;
+
+		case "rm":
+		case "removemember":
+		case "kick":
+			p.sendMessage(removeMember(p, args[1]));
+			return true;
+
+		case "rt":
+		case "removeteam":
+		case "disband":
+			removeTeam(p);
+			return true;
+
+		case "list":
+		case "lst":
+		case "showteams":
+		case "teams":
+			listTeams(p);
+			return true;
+
+		case "lm":
+		case "listmem":
+		case "listmembers":
+		case "members":
+			listMembers(p);
+			return true;
+
+		case "t":
+		case "c":
+		case "w":
+		case "pm":
+			args[0] = "";
+			SendTeamChat(p, appendMessage(args));
+			return true;
+
+		case "teamchat":
+		case "tc":
+			if (isInATeam(p)) {
+				getTeam(p).pData.get(p).chatLvl = CHATLVL.Team;
+				p.sendMessage("Chat channel changed to Team");
+			}
+			return true;
+
+		case "globalchat":
+		case "gc":
+			getTeam(p).pData.get(p).chatLvl = CHATLVL.Global;
+			p.sendMessage("Chat channel changed to Global");
+			return true;
+		}
 		return false;
 	}
 
-	
-	private void SendTeamChat(Player p, String[] args) {
+	private String appendMessage(String[] args) {
+		StringBuilder sb = new StringBuilder(50);
+		sb.append(ChatColor.GREEN);
+		for (String s : args) {
+			sb.append(s).append(' ');
+		}
+		return sb.toString();
+	}
 
-		if (isInATeam(p) && args.length != 0) {
+	public String TeamChatFormat(Player p, Team t) {
+		return ChatColor.GREEN + "[" + t.pData.get(p).teamRank.name() + "] "
+				+ p.getName() + ": ";
+	}
+
+	public void SendTeamChat(Player p, String msg) {
+		if (isInATeam(p) && msg != "") {
 			Team t = getTeam(p);
+			String message = TeamChatFormat(p, t) + msg;
 
-			// Half a line
-			StringBuilder sb = new StringBuilder(50);
-			sb.append(ChatColor.GREEN);
-
-			for (String s : args) {
-				sb.append(s).append(' ');
-			}
-
-			String msg = sb.toString();
 			for (Player pl : t.getMembers()) {
-				pl.sendMessage(msg);
+				pl.sendMessage(message);
 			}
 		}
-
 	}
-	
 
 	private String setFriendlyFire(Player p, String bool) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			if (t.getRank(p) == TeamRank.LEADER) {
-				if (friendlyFire.containsKey(bool) || bool.equalsIgnoreCase("toggle")) {
+				if (friendlyFire.containsKey(bool)
+						|| bool.equalsIgnoreCase("toggle")) {
 
-					t.friendlyFire = bool.equals("toggle") ? !t.friendlyFire : friendlyFire.get(bool);
+					t.friendlyFire = bool.equals("toggle") ? !t.friendlyFire
+							: friendlyFire.get(bool);
 
 					getConfig().set(t.teamName + ".FriendlyFire", friendlyFire);
-					return "Team " + t.teamName + " is now "
-					+ (t.friendlyFire ? "Friendly Fire is now on" : "Friendly Fire is now off");
+					return "Team "
+							+ t.teamName
+							+ " is now "
+							+ (t.friendlyFire ? "Friendly Fire is now on"
+									: "Friendly Fire is now off");
 				} else {
 					return "Accepts the values on, off, true, false and toggle.";
 				}
@@ -206,7 +223,7 @@ public class TeamManager extends JavaPlugin {
 
 	private boolean joinTeam(Player p, String tn) {
 		Team t = getTeam(tn);
-		
+
 		if (t != null) {
 			if (t.isOpen) {
 				p.sendMessage("You have joined Team: " + tn);
@@ -234,7 +251,8 @@ public class TeamManager extends JavaPlugin {
 
 				getConfig().set(t.teamName + ".Open", open);
 
-				return "Team " + t.teamName + " is now " + (open ? "Open" : "Closed");
+				return "Team " + t.teamName + " is now "
+						+ (open ? "Open" : "Closed");
 			} else {
 				return "Only leaders can do this.";
 			}
@@ -289,10 +307,8 @@ public class TeamManager extends JavaPlugin {
 			for (Player pl : t.getMembers()) {
 				pl.sendMessage(p.getName() + " has joined the team!!");
 			}
-
 			return true;
 		}
-
 		return false;
 	}
 
@@ -313,7 +329,8 @@ public class TeamManager extends JavaPlugin {
 				// is the other player in the team
 				if (t.Contains(otherPlayer)) {
 					t.SetLeader(otherPlayer);
-					return p.getName() + " is now the leader of team " + t.teamName;
+					return p.getName() + " is now the leader of team "
+							+ t.teamName;
 				} else {
 					return p.getName() + " is not in the team " + t.teamName;
 				}
@@ -339,11 +356,10 @@ public class TeamManager extends JavaPlugin {
 		if (!deosTeamExist(tn) && !tn.isEmpty()) {
 			if (!isInATeam(p)) {
 				Team t = new Team(this, tn, p);
-
 				getConfig().set(t.teamName + ".Open", t.isOpen);
 				getConfig().set(t.teamName + ".FriendlyFire", t.friendlyFire);
-
-				return "Team " + tn + " was created and you are now the leader!!";
+				return "Team " + tn
+						+ " was created and you are now the leader!!";
 			} else {
 				return "You must first leave your current team in order to create a new one";
 			}
@@ -380,17 +396,22 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public void listTeams(Player p) {
+		int count = 0;
 		for (Team t : CurrentTeams) {
 			if (t.isOpen) {
+				count++;
 				p.sendMessage(t.teamName);
 			}
+		}
+
+		if (count == 0) {
+			p.sendMessage("There are no open teams");
 		}
 	}
 
 	public void listMembers(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
-
 			for (Player pl : t.getMembers()) {
 				p.sendMessage(pl.getName() + " Rank: " + t.getRank(pl));
 			}
@@ -410,7 +431,6 @@ public class TeamManager extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
-		getLogger().info("Goodbye world!");
 		this.saveConfig();
 	}
 }
