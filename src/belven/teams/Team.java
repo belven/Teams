@@ -11,7 +11,7 @@ import belven.teams.TeamManager.TeamRank;
 public class Team
 {
     public String teamName;
-    public HashMap<Player, TeamRank> members = new HashMap<Player, TeamRank>();
+    public HashMap<Player, PlayerTeamData> pData = new HashMap<Player, PlayerTeamData>();
 
     public TeamManager plugin;
     public boolean friendlyFire = false;
@@ -47,12 +47,12 @@ public class Team
 
     public boolean Contains(Player p)
     {
-        return members.keySet().contains(p);
+        return pData.keySet().contains(p);
     }
 
     public void RemoveMember(Player p)
     {
-        members.remove(p);
+        pData.remove(p);
 
         plugin.reloadConfig();
         plugin.getConfig().set(
@@ -61,19 +61,19 @@ public class Team
 
     public Set<Player> getMembers()
     {
-        return members.keySet();
+        return pData.keySet();
     }
 
     public TeamRank getRank(Player p)
     {
-        return members.get(p);
+        return pData.get(p).teamRank;
     }
 
     public void SetLeader(Player p)
     {
-        for (Player pl : members.keySet())
+        for (Player pl : pData.keySet())
         {
-            if (members.get(pl) == TeamRank.LEADER)
+            if (pData.get(pl).teamRank == TeamRank.LEADER)
             {
                 SetRank(pl, TeamRank.MEMBER);
             }
@@ -98,13 +98,15 @@ public class Team
         plugin.CurrentTeams.remove(this);
     }
 
-    public void Add(Player p, TeamRank tr)
-    {
-        members.put(p, tr);
+    public void Add(Player p, TeamRank tr){
+    	PlayerTeamData data = pData.get(p);
+    	data.teamRank = tr;
+    	
+        pData.put(p, data);
 
         plugin.reloadConfig();
         plugin.getConfig().set(
                 teamName + ".Players." + p.getUniqueId().toString(),
-                tr.toString());
+                pData.get(p).toString());
     }
 }

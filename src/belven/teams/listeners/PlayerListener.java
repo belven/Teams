@@ -1,13 +1,18 @@
 package belven.teams.listeners;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
+import belven.teams.PlayerTeamData;
+import belven.teams.PlayerTeamData.CHATLVL;
+import belven.teams.Team;
 import belven.teams.TeamManager;
 
 public class PlayerListener implements Listener
@@ -26,6 +31,23 @@ public class PlayerListener implements Listener
         {
             PlayerTakenDamage(event);
         }
+    }
+    
+    @EventHandler
+    public void onPlayerChatEvent(AsyncPlayerChatEvent e){
+    	Player p = e.getPlayer();
+    	
+    	if(plugin.isInATeam(p)){
+    		Team t = plugin.getTeam(p);
+    		
+    		if(t.pData.get(p).chatLvl == CHATLVL.Team){
+	    		for(Player m : t.getMembers()){
+	    			m.sendMessage(ChatColor.GREEN + e.getMessage());
+	    		}
+	    		
+	    		e.setCancelled(true);
+    		}
+    	}
     }
 
     @EventHandler
