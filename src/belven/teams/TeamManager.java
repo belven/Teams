@@ -5,12 +5,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -33,6 +33,9 @@ public class TeamManager extends JavaPlugin {
 	private static HashMap<String, List<String>> CommandAlisases = new HashMap<String, List<String>>();
 
 	private static HashMap<String, Boolean> friendlyFire = new HashMap<String, Boolean>();
+	private static List<String> MemberCommands = new ArrayList<String>();
+	private static List<String> OfficerCommands = new ArrayList<String>();
+	private static List<String> LeaderCommands = new ArrayList<String>();
 
 	static {
 
@@ -72,7 +75,6 @@ public class TeamManager extends JavaPlugin {
 		CommandAlisases.put("removeteam",
 				Arrays.asList("removeteam", "rt", "disband"));
 
-		List<String> MemberCommands = new ArrayList<String>();
 		// Arrays.asList("jointeam", "join", "jt",
 		// "lt", "leaveteam", "leave", "list", "lst", "showteams",
 		// "teams", "lm", "listmem", "listmembers", "members", "teamchat",
@@ -86,7 +88,6 @@ public class TeamManager extends JavaPlugin {
 		MemberCommands.addAll(CommandAlisases.get("teamchat"));
 		MemberCommands.addAll(CommandAlisases.get("globalchat"));
 
-		List<String> OfficerCommands = new ArrayList<String>();
 		// Arrays.asList("cc", "claim",
 		// "claimchunk", "rc", "uc", "unclaim", "removeclaim", "so",
 		// "setopen", "sff", "setff", "setfriendlyfire", "rm",
@@ -99,7 +100,6 @@ public class TeamManager extends JavaPlugin {
 
 		OfficerCommands.addAll(MemberCommands);
 
-		List<String> LeaderCommands = new ArrayList<String>();
 		LeaderCommands.addAll(CommandAlisases.get("setleader"));
 		LeaderCommands.addAll(CommandAlisases.get("removeteam"));
 		// Arrays.asList("sl", "setleader", "rt",
@@ -136,6 +136,15 @@ public class TeamManager extends JavaPlugin {
 			t.friendlyFire = getConfig().getBoolean(
 					t.teamName + ".FriendlyFire");
 			t.isOpen = getConfig().getBoolean(t.teamName + ".Open");
+
+			ConfigurationSection config = getConfig().getConfigurationSection(
+					t.teamName + ".Players");
+			if (config != null) {
+				Set<String> teamPlayers = config.getKeys(false);
+				for (String tp : teamPlayers) {
+					t.playersUUIDs.add(tp);
+				}
+			}
 		}
 	}
 
@@ -271,21 +280,10 @@ public class TeamManager extends JavaPlugin {
 
 	public void AddPlayerToTeam(Player p) {
 		for (Team t : CurrentTeams) {
-			Set<String> teamPlayers = getConfig().getConfigurationSection(
-					t.teamName + ".Players").getKeys(false);
-			for (String tp : teamPlayers) {
-				getLogger().info("Player found " + tp);
-				if (p.getUniqueId().equals(UUID.fromString(tp))) {
-					getLogger().info(
-							"Player " + p.getName() + " was added to team "
-									+ t.teamName);
-
-					String something = getConfig().getString(
-							t.teamName + ".Players." + tp);
-
-					getLogger().info("Player was givin Rank: " + something);
-					t.Add(p, TeamRank.valueOf(something));
-				}
+			if (t.playersUUIDs.contains(p.getUniqueId().toString())) {
+				String rank = getConfig().getString(
+						t.teamName + ".Players." + p.getUniqueId().toString());
+				t.Add(p, TeamRank.valueOf(rank));
 			}
 		}
 	}

@@ -15,6 +15,7 @@ public class Team {
 	public String teamName;
 	public HashMap<Player, PlayerTeamData> pData = new HashMap<Player, PlayerTeamData>();
 	public List<Chunk> ownedChunks = new ArrayList<Chunk>();
+	public List<String> playersUUIDs = new ArrayList<String>();
 
 	public TeamManager plugin;
 	public boolean friendlyFire = false;
@@ -105,6 +106,7 @@ public class Team {
 		plugin.getConfig().set(
 				teamName + ".Players." + p.getUniqueId().toString(),
 				pData.get(p).toString());
+		playersUUIDs.add(p.getUniqueId().toString());
 	}
 
 	public void ClaimChunk(Player p, Location l) {
