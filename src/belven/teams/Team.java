@@ -1,9 +1,12 @@
 package belven.teams;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import org.bukkit.Chunk;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import belven.teams.TeamManager.TeamRank;
@@ -15,6 +18,7 @@ public class Team {
 	public TeamManager plugin;
 	public boolean friendlyFire = false;
 	public boolean isOpen = true;
+	public List<Chunk> ownedChunks = new ArrayList<Chunk>();
 
 	public Team(TeamManager tm, String tn) {
 		teamName = tn;
@@ -101,5 +105,16 @@ public class Team {
 		plugin.getConfig().set(
 				teamName + ".Players." + p.getUniqueId().toString(),
 				pData.get(p).toString());
+	}
+
+	public void ClaimChunk(Player p, Location location) {
+		Chunk c = location.getChunk();
+
+		if (!ownedChunks.contains(c)) {
+			ownedChunks.add(c);
+			plugin.AddTeamChunk(c, this);
+			plugin.SendTeamChat(this, p.getName()
+					+ " has just claim lad for the team.");
+		}
 	}
 }

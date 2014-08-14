@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Chunk;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -18,7 +19,9 @@ import belven.teams.listeners.PlayerListener;
 
 public class TeamManager extends JavaPlugin {
 	public List<Team> CurrentTeams = new ArrayList<Team>();
+	public HashMap<Chunk, Team> TeamChunks = new HashMap<Chunk, Team>();
 	private final PlayerListener playerListener = new PlayerListener(this);
+	public HashMap<Player, Team> playersInTeamLand = new HashMap<Player, Team>();
 
 	public enum TeamRank {
 		LEADER, MEMBER
@@ -96,6 +99,12 @@ public class TeamManager extends JavaPlugin {
 			leaveTeam(p);
 			return true;
 
+		case "cc":
+		case "claim":
+		case "claimchunk":
+			claimChunk(p);
+			return true;
+
 		case "ct":
 		case "createteam":
 		case "create":
@@ -169,6 +178,15 @@ public class TeamManager extends JavaPlugin {
 		return false;
 	}
 
+	private void claimChunk(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			t.ClaimChunk(p, p.getLocation());
+		} else {
+			p.sendMessage("You must be in a team to do this");
+		}
+	}
+
 	private String appendMessage(String[] args) {
 		StringBuilder sb = new StringBuilder(50);
 		sb.append(ChatColor.GREEN);
@@ -183,14 +201,18 @@ public class TeamManager extends JavaPlugin {
 				+ p.getName() + ": ";
 	}
 
+	public void SendTeamChat(Team t, String msg) {
+		if (msg != "") {
+			for (Player pl : t.getMembers()) {
+				pl.sendMessage(msg);
+			}
+		}
+	}
+
 	public void SendTeamChat(Player p, String msg) {
 		if (isInATeam(p) && msg != "") {
 			Team t = getTeam(p);
-			String message = TeamChatFormat(p, t) + msg;
-
-			for (Player pl : t.getMembers()) {
-				pl.sendMessage(message);
-			}
+			SendTeamChat(t, TeamChatFormat(p, t) + msg);
 		}
 	}
 
@@ -294,10 +316,10 @@ public class TeamManager extends JavaPlugin {
 				}
 				return "The player " + playerName + " is not online";
 			}
-			return "Only leaders can do this!!";
+			return "Only leaders can do this";
 
 		}
-		return "You must be in a team to do this!!";
+		return "You must be in a team to do this";
 	}
 
 	public boolean AddPlayerToTeam(Player p, Team t) {
@@ -305,7 +327,7 @@ public class TeamManager extends JavaPlugin {
 			t.Add(p, TeamRank.MEMBER);
 
 			for (Player pl : t.getMembers()) {
-				pl.sendMessage(p.getName() + " has joined the team!!");
+				pl.sendMessage(p.getName() + " has joined the team");
 			}
 			return true;
 		}
@@ -338,7 +360,7 @@ public class TeamManager extends JavaPlugin {
 				return "The player " + playerName + " is not online";
 			}
 		}
-		return "You must be in a team to do this!!";
+		return "You must be in a team to do this";
 	}
 
 	@SuppressWarnings("deprecation")
@@ -358,8 +380,7 @@ public class TeamManager extends JavaPlugin {
 				Team t = new Team(this, tn, p);
 				getConfig().set(t.teamName + ".Open", t.isOpen);
 				getConfig().set(t.teamName + ".FriendlyFire", t.friendlyFire);
-				return "Team " + tn
-						+ " was created and you are now the leader!!";
+				return "Team " + tn + " was created and you are now the leader";
 			} else {
 				return "You must first leave your current team in order to create a new one";
 			}
@@ -416,7 +437,7 @@ public class TeamManager extends JavaPlugin {
 				p.sendMessage(pl.getName() + " Rank: " + t.getRank(pl));
 			}
 		} else {
-			p.sendMessage("You must be in a team to do this!!");
+			p.sendMessage("You must be in a team to do this");
 		}
 	}
 
@@ -429,8 +450,20 @@ public class TeamManager extends JavaPlugin {
 		return null;
 	}
 
+	public Team getChunkOwner(Chunk c) {
+		return TeamChunks.get(c);
+	}
+
 	@Override
 	public void onDisable() {
 		this.saveConfig();
+	}
+
+	public void AddTeamChunk(Chunk c, Team t) {
+		TeamChunks.put(c, t);
+	}
+
+	public boolean teamOwnsChunk(Chunk c) {
+		return TeamChunks.containsKey(c);
 	}
 }
