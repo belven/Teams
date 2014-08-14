@@ -6,6 +6,8 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -42,26 +44,45 @@ public class PlayerListener implements Listener {
 	}
 
 	@EventHandler
-	public void onPlayerLoginEvent(PlayerLoginEvent event) {
-		plugin.AddPlayerToTeam(event.getPlayer());
+	public void onBlockBreakEvent(BlockBreakEvent event) {
+		Chunk c = event.getBlock().getChunk();
+		Player p = event.getPlayer();
+		if (plugin.teamOwnsChunk(c)) {
+			if (plugin.getTeam(p) != plugin.getChunkOwner(c)) {
+				event.setCancelled(true);
+				p.sendMessage("You can't break blocks that your team deson't own");
+			}
+		}
+	}
+
+	@EventHandler
+	public void onBlockPlaceEvent(BlockPlaceEvent event) {
+		Chunk c = event.getBlock().getChunk();
+		Player p = event.getPlayer();
+		if (plugin.teamOwnsChunk(c)) {
+			if (plugin.getTeam(p) != plugin.getChunkOwner(c)) {
+				event.setCancelled(true);
+				p.sendMessage("You can't place blocks in land your team deson't own");
+			}
+		}
 	}
 
 	@EventHandler
 	public void onPlayerMoveEvent(PlayerMoveEvent event) {
 		Player p = event.getPlayer();
 		Chunk c = p.getLocation().getChunk();
-		if (plugin.teamOwnsChunk(c) && !plugin.playersInTeamLand.containsKey(p)) {
-			plugin.playersInTeamLand.put(p, plugin.getChunkOwner(c));
-			String tn = plugin.getChunkOwner(c).teamName;
-			String msg = "You entered " + tn + "s land.";
-			p.sendMessage(msg);
-		} else if (!plugin.teamOwnsChunk(c)
-				&& plugin.playersInTeamLand.containsKey(p)) {
-			String tn = plugin.playersInTeamLand.get(p).teamName;
-			String msg = "You left " + tn + "s land.";
-			p.sendMessage(msg);
-			plugin.playersInTeamLand.remove(p);
+		TeamManager tm = plugin;
+
+		if (tm.teamOwnsChunk(c) && !tm.playersInTeamLand.containsKey(p)) {
+			tm.playerEnteredTeamLand(p);
+		} else if (!tm.teamOwnsChunk(c) && tm.playersInTeamLand.containsKey(p)) {
+			tm.playerLeftTeamLand(p);
 		}
+	}
+
+	@EventHandler
+	public void onPlayerLoginEvent(PlayerLoginEvent event) {
+		plugin.AddPlayerToTeam(event.getPlayer());
 	}
 
 	public void PlayerTakenDamage(EntityDamageByEntityEvent event) {

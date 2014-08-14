@@ -105,6 +105,13 @@ public class TeamManager extends JavaPlugin {
 			claimChunk(p);
 			return true;
 
+		case "rc":
+		case "uc":
+		case "unclaim":
+		case "removeclaim":
+			removeClaim(p);
+			return true;
+
 		case "ct":
 		case "createteam":
 		case "create":
@@ -176,6 +183,16 @@ public class TeamManager extends JavaPlugin {
 			return true;
 		}
 		return false;
+	}
+
+	private void removeClaim(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			t.removeClaim(p, p.getLocation());
+		} else {
+			p.sendMessage("You must be in a team to do this");
+		}
+
 	}
 
 	private void claimChunk(Player p) {
@@ -465,5 +482,34 @@ public class TeamManager extends JavaPlugin {
 
 	public boolean teamOwnsChunk(Chunk c) {
 		return TeamChunks.containsKey(c);
+	}
+
+	public void playerLeftTeamLand(Player p) {
+		String tn = playersInTeamLand.get(p).teamName;
+		if (getTeam(p) == playersInTeamLand.get(p)) {
+			String msg = "You left " + tn + "s land.";
+			p.sendMessage(msg);
+		} else {
+			String msg = "You left " + tn + "s land.";
+			p.sendMessage(msg);
+			msg = p.getName() + " left your teams land.";
+			SendTeamChat(playersInTeamLand.get(p), msg);
+		}
+		playersInTeamLand.remove(p);
+	}
+
+	public void playerEnteredTeamLand(Player p) {
+		Chunk c = p.getLocation().getChunk();
+		playersInTeamLand.put(p, getChunkOwner(c));
+		String tn = getChunkOwner(c).teamName;
+		if (getTeam(p) == getChunkOwner(c)) {
+			String msg = "You entered " + tn + "s land.";
+			p.sendMessage(msg);
+		} else {
+			String msg = "You entered " + tn + "s land.";
+			p.sendMessage(msg);
+			msg = p.getName() + " entered your teams land.";
+			SendTeamChat(getChunkOwner(c), msg);
+		}
 	}
 }

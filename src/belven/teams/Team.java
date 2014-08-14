@@ -14,11 +14,11 @@ import belven.teams.TeamManager.TeamRank;
 public class Team {
 	public String teamName;
 	public HashMap<Player, PlayerTeamData> pData = new HashMap<Player, PlayerTeamData>();
+	public List<Chunk> ownedChunks = new ArrayList<Chunk>();
 
 	public TeamManager plugin;
 	public boolean friendlyFire = false;
 	public boolean isOpen = true;
-	public List<Chunk> ownedChunks = new ArrayList<Chunk>();
 
 	public Team(TeamManager tm, String tn) {
 		teamName = tn;
@@ -107,14 +107,25 @@ public class Team {
 				pData.get(p).toString());
 	}
 
-	public void ClaimChunk(Player p, Location location) {
-		Chunk c = location.getChunk();
-
+	public void ClaimChunk(Player p, Location l) {
+		Chunk c = l.getChunk();
 		if (!ownedChunks.contains(c)) {
 			ownedChunks.add(c);
-			plugin.AddTeamChunk(c, this);
-			plugin.SendTeamChat(this, p.getName()
-					+ " has just claim lad for the team.");
+			plugin.TeamChunks.put(c, this);
+			String msg = p.getName() + " claim land for " + teamName;
+			plugin.SendTeamChat(this, msg);
+		}
+	}
+
+	public void removeClaim(Player p, Location l) {
+		Chunk c = l.getChunk();
+		if (ownedChunks.contains(c)) {
+			ownedChunks.remove(c);
+			plugin.TeamChunks.remove(c);
+			String msg = p.getName() + " removed claimed land for " + teamName;
+			plugin.SendTeamChat(this, msg);
+		} else {
+			p.sendMessage("Your team doesn't own this land");
 		}
 	}
 }
