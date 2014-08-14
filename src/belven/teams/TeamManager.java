@@ -1,6 +1,7 @@
 package belven.teams;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -24,16 +25,99 @@ public class TeamManager extends JavaPlugin {
 	public HashMap<Player, Team> playersInTeamLand = new HashMap<Player, Team>();
 
 	public enum TeamRank {
-		LEADER, MEMBER
+		LEADER, MEMBER, OFFICER
 	}
+
+	private static HashMap<TeamRank, String> TeamRankfriendlyNames = new HashMap<TeamRank, String>();
+	private static HashMap<TeamRank, List<String>> TeamRankCommandPerms = new HashMap<TeamRank, List<String>>();
+	private static HashMap<String, List<String>> CommandAlisases = new HashMap<String, List<String>>();
 
 	private static HashMap<String, Boolean> friendlyFire = new HashMap<String, Boolean>();
 
 	static {
+
+		CommandAlisases
+				.put("jointeam", Arrays.asList("jointeam", "join", "jt"));
+
+		CommandAlisases.put("leaveteam",
+				Arrays.asList("leaveteam", "leave", "lt"));
+
+		CommandAlisases.put("list",
+				Arrays.asList("list", "lst", "showteams", "teams"));
+
+		CommandAlisases.put("listmembers",
+				Arrays.asList("listmembers", "lm", "listmem", "members"));
+
+		CommandAlisases.put("chat", Arrays.asList("t", "c", "w", "pm"));
+
+		CommandAlisases.put("teamchat", Arrays.asList("teamchat", "tc"));
+		CommandAlisases.put("globalchat", Arrays.asList("globalchat", "gc"));
+
+		CommandAlisases.put("claimchunk",
+				Arrays.asList("claimchunk", "cc", "claim"));
+
+		CommandAlisases.put("removeclaim",
+				Arrays.asList("removeclaim", "rc", "unclaim", "uc"));
+
+		CommandAlisases.put("setopen", Arrays.asList("setopen", "so"));
+
+		CommandAlisases.put("setfriendlyfire",
+				Arrays.asList("setfriendlyfire", "setff", "sff"));
+
+		CommandAlisases.put("removemember",
+				Arrays.asList("removemember", "rm", "kick"));
+
+		CommandAlisases.put("setleader", Arrays.asList("setleader", "sl"));
+
+		CommandAlisases.put("removeteam",
+				Arrays.asList("removeteam", "rt", "disband"));
+
+		List<String> MemberCommands = new ArrayList<String>();
+		// Arrays.asList("jointeam", "join", "jt",
+		// "lt", "leaveteam", "leave", "list", "lst", "showteams",
+		// "teams", "lm", "listmem", "listmembers", "members", "teamchat",
+		// "tc", "globalchat", "gc");
+
+		MemberCommands.addAll(CommandAlisases.get("jointeam"));
+		MemberCommands.addAll(CommandAlisases.get("leaveteam"));
+		MemberCommands.addAll(CommandAlisases.get("listmembers"));
+		MemberCommands.addAll(CommandAlisases.get("list"));
+		MemberCommands.addAll(CommandAlisases.get("chat"));
+		MemberCommands.addAll(CommandAlisases.get("teamchat"));
+		MemberCommands.addAll(CommandAlisases.get("globalchat"));
+
+		List<String> OfficerCommands = new ArrayList<String>();
+		// Arrays.asList("cc", "claim",
+		// "claimchunk", "rc", "uc", "unclaim", "removeclaim", "so",
+		// "setopen", "sff", "setff", "setfriendlyfire", "rm",
+		// "removemember", "kick");
+		OfficerCommands.addAll(CommandAlisases.get("claimchunk"));
+		OfficerCommands.addAll(CommandAlisases.get("removeclaim"));
+		OfficerCommands.addAll(CommandAlisases.get("setopen"));
+		OfficerCommands.addAll(CommandAlisases.get("setfriendlyfire"));
+		OfficerCommands.addAll(CommandAlisases.get("removemember"));
+
+		OfficerCommands.addAll(MemberCommands);
+
+		List<String> LeaderCommands = new ArrayList<String>();
+		LeaderCommands.addAll(CommandAlisases.get("setleader"));
+		LeaderCommands.addAll(CommandAlisases.get("removeteam"));
+		// Arrays.asList("sl", "setleader", "rt",
+		// "removeteam", "disband");
+
+		LeaderCommands.addAll(OfficerCommands);
+
 		friendlyFire.put("on", true);
 		friendlyFire.put("true", true);
 		friendlyFire.put("off", false);
 		friendlyFire.put("false", false);
+		TeamRankfriendlyNames.put(TeamRank.LEADER, "Leader");
+		TeamRankfriendlyNames.put(TeamRank.MEMBER, "Member");
+		TeamRankfriendlyNames.put(TeamRank.OFFICER, "Officer");
+
+		TeamRankCommandPerms.put(TeamRank.MEMBER, MemberCommands);
+		TeamRankCommandPerms.put(TeamRank.OFFICER, OfficerCommands);
+		TeamRankCommandPerms.put(TeamRank.LEADER, LeaderCommands);
 	}
 
 	@Override
@@ -55,28 +139,6 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
-	public void AddPlayerToTeam(Player p) {
-		for (Team t : CurrentTeams) {
-			Set<String> teamPlayers = getConfig().getConfigurationSection(
-					t.teamName + ".Players").getKeys(false);
-			for (String tp : teamPlayers) {
-				getLogger().info("Player found " + tp);
-
-				if (p.getUniqueId().equals(UUID.fromString(tp))) {
-					getLogger().info(
-							"Player " + p.getName() + " was added to team "
-									+ t.teamName);
-
-					String something = getConfig().getString(
-							t.teamName + ".Players." + tp);
-
-					getLogger().info("Player was givin Rank: " + something);
-					t.Add(p, TeamRank.valueOf(something));
-				}
-			}
-		}
-	}
-
 	public boolean onCommand(CommandSender sender, Command cmd, String label,
 			String[] args) {
 		Player p = (Player) sender;
@@ -91,6 +153,11 @@ public class TeamManager extends JavaPlugin {
 		case "jointeam":
 		case "join":
 			joinTeam(p, args[1]);
+			return true;
+
+		case "lc":
+		case "listcommands":
+			listCommands(p);
 			return true;
 
 		case "lt":
@@ -185,6 +252,44 @@ public class TeamManager extends JavaPlugin {
 		return false;
 	}
 
+	private void listCommands(Player p) {
+		if (isInATeam(p)) {
+
+			List<String> commands = TeamRankCommandPerms.get(getTeam(p)
+					.getRank(p));
+
+			StringBuilder sb = new StringBuilder(commands.size()
+					+ (commands.size() * 3));
+
+			for (String s : commands) {
+				sb.append(s + ", ");
+			}
+
+			p.sendMessage(sb.toString());
+		}
+	}
+
+	public void AddPlayerToTeam(Player p) {
+		for (Team t : CurrentTeams) {
+			Set<String> teamPlayers = getConfig().getConfigurationSection(
+					t.teamName + ".Players").getKeys(false);
+			for (String tp : teamPlayers) {
+				getLogger().info("Player found " + tp);
+				if (p.getUniqueId().equals(UUID.fromString(tp))) {
+					getLogger().info(
+							"Player " + p.getName() + " was added to team "
+									+ t.teamName);
+
+					String something = getConfig().getString(
+							t.teamName + ".Players." + tp);
+
+					getLogger().info("Player was givin Rank: " + something);
+					t.Add(p, TeamRank.valueOf(something));
+				}
+			}
+		}
+	}
+
 	private void removeClaim(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
@@ -192,13 +297,17 @@ public class TeamManager extends JavaPlugin {
 		} else {
 			p.sendMessage("You must be in a team to do this");
 		}
-
 	}
 
 	private void claimChunk(Player p) {
 		if (isInATeam(p)) {
-			Team t = getTeam(p);
-			t.ClaimChunk(p, p.getLocation());
+			if (!teamOwnsChunk(p.getLocation().getChunk())) {
+				Team t = getTeam(p);
+				t.ClaimChunk(p, p.getLocation());
+			} else {
+				Team t = getChunkOwner(p.getLocation().getChunk());
+				p.sendMessage(t.teamName + " owns this land");
+			}
 		} else {
 			p.sendMessage("You must be in a team to do this");
 		}
@@ -451,7 +560,8 @@ public class TeamManager extends JavaPlugin {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			for (Player pl : t.getMembers()) {
-				p.sendMessage(pl.getName() + " Rank: " + t.getRank(pl));
+				p.sendMessage(pl.getName() + " Rank: "
+						+ TeamRankfriendlyNames.get(t.getRank(pl)));
 			}
 		} else {
 			p.sendMessage("You must be in a team to do this");

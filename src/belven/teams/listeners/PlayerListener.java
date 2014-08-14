@@ -6,13 +6,16 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 
+import resources.MaterialFunctions;
 import belven.teams.PlayerTeamData.CHATLVL;
 import belven.teams.Team;
 import belven.teams.TeamManager;
@@ -28,6 +31,22 @@ public class PlayerListener implements Listener {
 	public void onEntityDamage(EntityDamageByEntityEvent event) {
 		if (event.getEntityType() == EntityType.PLAYER) {
 			PlayerTakenDamage(event);
+		}
+	}
+
+	@EventHandler
+	public void onPlayerInteractEvent(PlayerInteractEvent event) {
+		if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+			if (!MaterialFunctions.isNotInteractiveBlock(event
+					.getClickedBlock().getType())) {
+				Chunk c = event.getClickedBlock().getChunk();
+				Player p = event.getPlayer();
+				if (plugin.teamOwnsChunk(c)) {
+					if (plugin.getTeam(p) != plugin.getChunkOwner(c)) {
+						event.setCancelled(true);
+					}
+				}
+			}
 		}
 	}
 
@@ -93,25 +112,6 @@ public class PlayerListener implements Listener {
 		if (damagerEntity instanceof Player) {
 			damagerPlayer = (Player) event.getDamager();
 		}
-		// else if (damagerEntity.getType() == EntityType.ARROW)
-		// {
-		// Arrow currentArrow = (Arrow) damagerEntity;
-		//
-		// if (currentArrow.getShooter().getType() == EntityType.PLAYER)
-		// {
-		// damagerPlayer = (Player) currentArrow.getShooter();
-		// }
-		// }
-		// else if (damagerEntity.getType() == EntityType.FIREBALL)
-		// {
-		// Projectile currentFireball = (Projectile) damagerEntity;
-		//
-		// if (currentFireball instanceof Fireball
-		// && currentFireball.getShooter().getType() == EntityType.PLAYER)
-		// {
-		// damagerPlayer = (Player) currentFireball.getShooter();
-		// }
-		// }
 
 		if (damagerPlayer != null) {
 			if (plugin.isInSameTeam(damagedPlayer, damagerPlayer)) {
