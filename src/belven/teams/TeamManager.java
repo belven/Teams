@@ -1,7 +1,11 @@
 package belven.teams;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +46,7 @@ public class TeamManager extends JavaPlugin {
 	private static List<String> OfficerCommands = new ArrayList<String>();
 	private static List<String> LeaderCommands = new ArrayList<String>();
 	HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
+	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
 	static {
 		CommandAlisases
@@ -147,8 +152,22 @@ public class TeamManager extends JavaPlugin {
 			if (config != null) {
 				Set<String> teamPlayers = config.getKeys(false);
 				for (String tp : teamPlayers) {
-					if (!t.playersUUIDs.contains(tp))
-						t.playersUUIDs.add(tp);
+					if (!t.playersUUIDs.containsKey(tp)) {
+						String rank = getConfig().getString(
+								t.teamName + ".Players." + tp);
+						t.playersUUIDs.put(tp, rank);
+					}
+				}
+			}
+
+			if (getConfig().contains(s + ".Last Claimed")) {
+				Date lastDate;
+				try {
+					lastDate = dateFormat.parse(getConfig().getString(
+							s + ".Last Claimed"));
+					t.lastClaimDate = lastDate;
+				} catch (ParseException e) {
+					e.printStackTrace();
 				}
 			}
 
@@ -545,7 +564,7 @@ public class TeamManager extends JavaPlugin {
 
 	public void AddPlayerToTeamFromConfig(Player p) {
 		for (Team t : CurrentTeams) {
-			if (t.playersUUIDs.contains(p.getUniqueId().toString())) {
+			if (t.playersUUIDs.containsKey(p.getUniqueId().toString())) {
 				String rank = getConfig().getString(
 						t.teamName + ".Players." + p.getUniqueId().toString());
 				t.Add(p, TeamRank.valueOf(rank));

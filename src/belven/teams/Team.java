@@ -22,7 +22,7 @@ public class Team {
 	public String teamName;
 	public HashMap<Player, PlayerTeamData> pData = new HashMap<Player, PlayerTeamData>();
 	public List<Chunk> ownedChunks = new ArrayList<Chunk>();
-	public List<String> playersUUIDs = new ArrayList<String>();
+	public HashMap<String, String> playersUUIDs = new HashMap<String, String>();
 	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	Calendar cal = Calendar.getInstance();
 
@@ -119,9 +119,8 @@ public class Team {
 
 	public void SavePlayersToConfig() {
 		FileConfiguration conf = plugin.getConfig();
-		for (Player p : pData.keySet()) {
-			conf.set(teamName + ".Players." + p.getUniqueId().toString(), pData
-					.get(p).toString());
+		for (String p : playersUUIDs.keySet()) {
+			conf.set(teamName + ".Players." + p, playersUUIDs.get(p));
 		}
 	}
 
@@ -144,7 +143,7 @@ public class Team {
 			plugin.getConfig().set(
 					teamName + ".Players." + p.getUniqueId().toString(),
 					pData.get(p).toString());
-			playersUUIDs.add(p.getUniqueId().toString());
+			playersUUIDs.put(p.getUniqueId().toString(), tr.toString());
 			plugin.saveConfig();
 		}
 	}
@@ -184,7 +183,7 @@ public class Team {
 	}
 
 	public int getMaxChunks() {
-		return playersUUIDs.size() * 3;
+		return playersUUIDs.size() * 7;
 	}
 
 	public void saveTeamChunks() {
