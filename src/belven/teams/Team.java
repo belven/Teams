@@ -29,6 +29,7 @@ public class Team {
 	public TeamManager plugin;
 	public boolean friendlyFire = false;
 	public boolean isOpen = true;
+	Date lastClaimDate = new Date();
 
 	private static final int SECOND = 1000;
 	private static final int MINUTE = 60 * SECOND;
@@ -102,7 +103,26 @@ public class Team {
 
 	public void SaveTeam() {
 		FileConfiguration conf = plugin.getConfig();
+		conf.set(teamName, null);
 		conf.set(teamName + ".Open", isOpen);
+		conf.set(teamName + ".FriendlyFire", friendlyFire);
+
+		if (lastClaimDate != null) {
+			String date = dateFormat.format(lastClaimDate);
+			conf.set(teamName + ".Last Claimed", date);
+		}
+
+		SavePlayersToConfig();
+		saveTeamChunks();
+		plugin.saveConfig();
+	}
+
+	public void SavePlayersToConfig() {
+		FileConfiguration conf = plugin.getConfig();
+		for (Player p : pData.keySet()) {
+			conf.set(teamName + ".Players." + p.getUniqueId().toString(), pData
+					.get(p).toString());
+		}
 	}
 
 	public void RemoveTeam() {
@@ -115,6 +135,10 @@ public class Team {
 		plugin.reloadConfig();
 
 		if (!pData.containsKey(p)) {
+			if (pData.keySet().size() == 0) {
+				tr = TeamRank.LEADER;
+			}
+
 			PlayerTeamData data = new PlayerTeamData(tr);
 			pData.put(p, data);
 			plugin.getConfig().set(
@@ -190,6 +214,7 @@ public class Team {
 		if (plugin.getConfig().contains(path)) {
 			try {
 				lastDate = dateFormat.parse(plugin.getConfig().getString(path));
+				lastClaimDate = lastDate;
 				long diff = cal.getTime().getTime() - lastDate.getTime();
 				hoursDiff = diff / HOUR;
 				return timeBetweenClaims() - hoursDiff;
@@ -207,9 +232,11 @@ public class Team {
 	public void removeClaim(Player p, Location l) {
 		Chunk c = l.getChunk();
 		if (ownedChunks.contains(c)) {
-			plugin.showClaims(p);
-			ownedChunks.remove(c);
+			if (plugin.playersWithBlockChanges.containsKey(p)) {
+				plugin.showClaims(p);
+			}
 
+			ownedChunks.remove(c);
 			plugin.TeamChunks.remove(c);
 
 			String msg = p.getName() + " removed claimed land for " + teamName;

@@ -41,7 +41,7 @@ public class TeamManager extends JavaPlugin {
 	private static List<String> MemberCommands = new ArrayList<String>();
 	private static List<String> OfficerCommands = new ArrayList<String>();
 	private static List<String> LeaderCommands = new ArrayList<String>();
-	private HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
+	HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
 
 	static {
 		CommandAlisases
@@ -688,6 +688,10 @@ public class TeamManager extends JavaPlugin {
 
 	@Override
 	public void onDisable() {
+		for (Team t : CurrentTeams) {
+			t.SaveTeam();
+		}
+
 		this.saveConfig();
 	}
 
