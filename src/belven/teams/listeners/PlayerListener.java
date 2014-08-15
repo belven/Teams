@@ -14,6 +14,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import resources.MaterialFunctions;
 import belven.teams.PlayerTeamData.CHATLVL;
@@ -101,8 +102,13 @@ public class PlayerListener implements Listener {
 
 	@EventHandler
 	public void onPlayerLoginEvent(PlayerLoginEvent event) {
-		plugin.AddPlayerToTeam(event.getPlayer());
+		plugin.AddPlayerToTeamFromConfig(event.getPlayer());
 	}
+
+	@EventHandler
+	public void onPlayerQuitEvent(PlayerQuitEvent event) {
+		plugin.RemovePlayerFromTeam(event.getPlayer());		
+	}	
 
 	public void PlayerTakenDamage(EntityDamageByEntityEvent event) {
 		Player damagedPlayer = (Player) event.getEntity();

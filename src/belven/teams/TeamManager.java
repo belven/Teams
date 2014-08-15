@@ -44,7 +44,6 @@ public class TeamManager extends JavaPlugin {
 	private HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
 
 	static {
-
 		CommandAlisases
 				.put("jointeam", Arrays.asList("jointeam", "join", "jt"));
 
@@ -148,7 +147,8 @@ public class TeamManager extends JavaPlugin {
 			if (config != null) {
 				Set<String> teamPlayers = config.getKeys(false);
 				for (String tp : teamPlayers) {
-					t.playersUUIDs.add(tp);
+					if (!t.playersUUIDs.contains(tp))
+						t.playersUUIDs.add(tp);
 				}
 			}
 
@@ -171,8 +171,7 @@ public class TeamManager extends JavaPlugin {
 				getLogger().info(chunksList);
 				for (String chunk : chunksList.split("@C")) {
 					Location l = StringToLocation(chunk, world);
-					t.ownedChunks.add(l.getBlock().getChunk());
-					TeamChunks.put(l.getChunk(), t);
+					AddTeamChunk(l.getBlock().getChunk(), t);
 				}
 			}
 		}
@@ -319,13 +318,18 @@ public class TeamManager extends JavaPlugin {
 					lastDist = p.getLocation().distance(b.getLocation());
 				}
 			}
-			
-			p.teleport(lastLocation);
+
+			if (lastLocation != null) {
+				p.sendMessage("Teleporting to nearest claim");
+				p.teleport(lastLocation);
+			} else {
+				p.sendMessage("No claims found");
+			}
 		}
 	}
 
 	@SuppressWarnings("deprecation")
-	private void showClaims(Player p) {
+	public void showClaims(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			int y = 0;
@@ -380,16 +384,6 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
-	public void AddPlayerToTeam(Player p) {
-		for (Team t : CurrentTeams) {
-			if (t.playersUUIDs.contains(p.getUniqueId().toString())) {
-				String rank = getConfig().getString(
-						t.teamName + ".Players." + p.getUniqueId().toString());
-				t.Add(p, TeamRank.valueOf(rank));
-			}
-		}
-	}
-
 	private void removeClaim(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
@@ -423,7 +417,8 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public String TeamChatFormat(Player p, Team t) {
-		return ChatColor.GREEN + "[" + t.pData.get(p).teamRank.name() + "] "
+		return ChatColor.GREEN + "["
+				+ TeamRankfriendlyNames.get(t.pData.get(p).teamRank) + "] "
 				+ p.getName() + ": ";
 	}
 
@@ -546,6 +541,16 @@ public class TeamManager extends JavaPlugin {
 
 		}
 		return "You must be in a team to do this";
+	}
+
+	public void AddPlayerToTeamFromConfig(Player p) {
+		for (Team t : CurrentTeams) {
+			if (t.playersUUIDs.contains(p.getUniqueId().toString())) {
+				String rank = getConfig().getString(
+						t.teamName + ".Players." + p.getUniqueId().toString());
+				t.Add(p, TeamRank.valueOf(rank));
+			}
+		}
 	}
 
 	public boolean AddPlayerToTeam(Player p, Team t) {
@@ -688,6 +693,7 @@ public class TeamManager extends JavaPlugin {
 
 	public void AddTeamChunk(Chunk c, Team t) {
 		TeamChunks.put(c, t);
+		t.ownedChunks.add(c);
 	}
 
 	public boolean teamOwnsChunk(Chunk c) {
@@ -741,6 +747,13 @@ public class TeamManager extends JavaPlugin {
 			p.sendMessage(msg);
 			msg = p.getName() + " entered your teams land.";
 			SendTeamChat(getChunkOwner(c), msg);
+		}
+	}
+
+	public void RemovePlayerFromTeam(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			t.pData.remove(p);
 		}
 	}
 }

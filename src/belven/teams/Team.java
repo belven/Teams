@@ -13,6 +13,7 @@ import java.util.Set;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
 import belven.teams.TeamManager.TeamRank;
@@ -99,6 +100,11 @@ public class Team {
 		RemoveMember(p);
 	}
 
+	public void SaveTeam() {
+		FileConfiguration conf = plugin.getConfig();
+		conf.set(teamName + ".Open", isOpen);
+	}
+
 	public void RemoveTeam() {
 		plugin.getConfig().set(teamName, null);
 		plugin.CurrentTeams.remove(this);
@@ -106,22 +112,17 @@ public class Team {
 	}
 
 	public void Add(Player p, TeamRank tr) {
-		PlayerTeamData data;
-
-		if (pData.containsKey(p)) {
-			data = pData.get(p);
-		} else {
-			data = new PlayerTeamData(tr);
-		}
-
-		data.teamRank = tr;
-		pData.put(p, data);
 		plugin.reloadConfig();
-		plugin.getConfig().set(
-				teamName + ".Players." + p.getUniqueId().toString(),
-				pData.get(p).toString());
-		playersUUIDs.add(p.getUniqueId().toString());
-		plugin.saveConfig();
+
+		if (!pData.containsKey(p)) {
+			PlayerTeamData data = new PlayerTeamData(tr);
+			pData.put(p, data);
+			plugin.getConfig().set(
+					teamName + ".Players." + p.getUniqueId().toString(),
+					pData.get(p).toString());
+			playersUUIDs.add(p.getUniqueId().toString());
+			plugin.saveConfig();
+		}
 	}
 
 	public void ClaimChunk(Player p, Location l) {
@@ -130,16 +131,18 @@ public class Team {
 
 		if (!ownedChunks.contains(c)) {
 			if (durationFromLastClaim() <= 0) {
-				if (ownedChunks.size() < getMaxChunks()) {
+				if (ownedChunks.size() <= getMaxChunks()) {
 					ownedChunks.add(c);
-
 					plugin.TeamChunks.put(c, this);
-					plugin.SendTeamChat(
-							this,
-							p.getName() + " claim land for " + teamName
-									+ ", you can claim "
-									+ String.valueOf(getMaxChunks())
-									+ " chunks of land.");
+
+					String claimsLeft = String.valueOf(getMaxChunks()
+							- ownedChunks.size());
+
+					String msg = p.getName() + " claim land for " + teamName
+							+ ", you can claim " + claimsLeft
+							+ " chunks of land.";
+
+					plugin.SendTeamChat(this, msg);
 
 					String date = dateFormat.format(cal.getTime());
 					plugin.getConfig().set(path, date);
@@ -204,8 +207,9 @@ public class Team {
 	public void removeClaim(Player p, Location l) {
 		Chunk c = l.getChunk();
 		if (ownedChunks.contains(c)) {
-
+			plugin.showClaims(p);
 			ownedChunks.remove(c);
+
 			plugin.TeamChunks.remove(c);
 
 			String msg = p.getName() + " removed claimed land for " + teamName;
