@@ -59,16 +59,14 @@ public class Team {
 	}
 
 	public boolean Contains(Player p) {
-		return pData.keySet().contains(p);
+		return getMembers().contains(p);
 	}
 
 	public void RemoveMember(Player p) {
 		pData.remove(p);
 		plugin.reloadConfig();
-		plugin.getConfig().set(
-				teamName + ".Players." + p.getUniqueId().toString(), null);
-
-		if (pData.keySet().size() == 0) {
+		plugin.getConfig().set(PlayerPath(p), null);
+		if (getMembers().size() == 0) {
 			RemoveTeam();
 		}
 
@@ -84,7 +82,7 @@ public class Team {
 	}
 
 	public void SetLeader(Player p) {
-		for (Player pl : pData.keySet()) {
+		for (Player pl : getMembers()) {
 			if (pData.get(pl).teamRank == TeamRank.LEADER) {
 				SetRank(pl, TeamRank.MEMBER);
 			}
@@ -133,44 +131,61 @@ public class Team {
 	public void Add(Player p, TeamRank tr) {
 		plugin.reloadConfig();
 
-		if (!pData.containsKey(p)) {
-			if (pData.keySet().size() == 0) {
+		if (!Contains(p)) {
+			if (getMembers().size() == 0) {
 				tr = TeamRank.LEADER;
 			}
 
 			PlayerTeamData data = new PlayerTeamData(tr);
 			pData.put(p, data);
-			plugin.getConfig().set(
-					teamName + ".Players." + p.getUniqueId().toString(),
-					pData.get(p).toString());
+			plugin.getConfig().set(PlayerPath(p), pData.get(p).toString());
 			playersUUIDs.put(p.getUniqueId().toString(), tr.toString());
 			plugin.saveConfig();
 		}
+	}
+
+	public String PlayerPath(Player p) {
+		return teamName + ".Players." + p.getUniqueId().toString();
+	}
+
+	public boolean OwnsChunk(Chunk c) {
+		return ownedChunks.contains(c);
+	}
+
+	public boolean CanClaim() {
+		return ownedChunks.size() <= getMaxChunks();
+	}
+
+	public int ClaimsLeft() {
+		return getMaxChunks() - ownedChunks.size();
+	}
+
+	public void AddChunkToTeam(Chunk c) {
+		ownedChunks.add(c);
+		plugin.TeamChunks.put(c, this);
 	}
 
 	public void ClaimChunk(Player p, Location l) {
 		Chunk c = l.getChunk();
 		String path = teamName + ".Last Claimed";
 
-		if (!ownedChunks.contains(c)) {
+		if (!OwnsChunk(c)) {
 			if (durationFromLastClaim() <= 0) {
-				if (ownedChunks.size() <= getMaxChunks()) {
-					ownedChunks.add(c);
-					plugin.TeamChunks.put(c, this);
+				if (CanClaim()) {
 
-					String claimsLeft = String.valueOf(getMaxChunks()
-							- ownedChunks.size());
+					AddChunkToTeam(c);
 
-					String msg = p.getName() + " claim land for " + teamName
-							+ ", you can claim " + claimsLeft
-							+ " chunks of land.";
+					plugin.SendTeamChat(
+							this,
+							p.getName() + " claim land for " + teamName
+									+ ", you can claim "
+									+ String.valueOf(ClaimsLeft())
+									+ " chunks of land.");
+					
+					plugin.getConfig().set(path,
+							dateFormat.format(cal.getTime()));
 
-					plugin.SendTeamChat(this, msg);
-
-					String date = dateFormat.format(cal.getTime());
-					plugin.getConfig().set(path, date);
 					saveTeamChunks();
-					plugin.saveConfig();
 				} else {
 					p.sendMessage("Your team cannot claim more land ");
 				}
@@ -186,10 +201,13 @@ public class Team {
 		return playersUUIDs.size() * 7;
 	}
 
+	public String GetChunkWorld() {
+		return ownedChunks.get(0).getWorld().getName();
+	}
+
 	public void saveTeamChunks() {
 		if (ownedChunks.size() == 1) {
-			plugin.getConfig().set(teamName + ".World",
-					ownedChunks.get(0).getWorld().getName());
+			plugin.getConfig().set(teamName + ".World", GetChunkWorld());
 		}
 
 		StringBuilder sb = new StringBuilder(50);
@@ -205,44 +223,52 @@ public class Team {
 	}
 
 	public long durationFromLastClaim() {
-		Calendar cal = Calendar.getInstance();
+		FileConfiguration con = plugin.getConfig();
 		String path = teamName + ".Last Claimed";
 		Date lastDate = new Date();
-		long hoursDiff = 0;
 
-		if (plugin.getConfig().contains(path)) {
+		if (con.contains(path)) {
 			try {
-				lastDate = dateFormat.parse(plugin.getConfig().getString(path));
-				lastClaimDate = lastDate;
-				long diff = cal.getTime().getTime() - lastDate.getTime();
-				hoursDiff = diff / HOUR;
-				return timeBetweenClaims() - hoursDiff;
+				if (lastClaimDate != null) {
+					lastDate = lastClaimDate;
+				} else {
+					lastDate = dateFormat.parse(con.getString(path));
+					lastClaimDate = lastDate;
+				}
+
+				long diff = Calendar.getInstance().getTime().getTime()
+						- lastDate.getTime();
+
+				return timeBetweenClaims() - (diff / HOUR);
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
 		}
-		return hoursDiff;
+		return 0;
 	}
 
 	public long timeBetweenClaims() {
 		return 1L;
 	}
 
+	public void RemoveChunkFromTeam(Chunk c) {
+		ownedChunks.remove(c);
+		plugin.TeamChunks.remove(c);
+	}
+
 	public void removeClaim(Player p, Location l) {
 		Chunk c = l.getChunk();
-		if (ownedChunks.contains(c)) {
+		if (OwnsChunk(c)) {
 			if (plugin.playersWithBlockChanges.containsKey(p)) {
 				plugin.showClaims(p);
 			}
 
-			ownedChunks.remove(c);
-			plugin.TeamChunks.remove(c);
+			RemoveChunkFromTeam(c);
 
-			String msg = p.getName() + " removed claimed land for " + teamName;
-			plugin.SendTeamChat(this, msg);
+			plugin.SendTeamChat(this, p.getName()
+					+ " removed claimed land for " + teamName);
 
-			String path = teamName + ".Last Claimed";
-			plugin.getConfig().set(path, null);
+			plugin.getConfig().set(teamName + ".Last Claimed", null);
 			saveTeamChunks();
 		} else {
 			p.sendMessage("Your team doesn't own this land");

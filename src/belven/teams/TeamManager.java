@@ -190,7 +190,7 @@ public class TeamManager extends JavaPlugin {
 				getLogger().info(chunksList);
 				for (String chunk : chunksList.split("@C")) {
 					Location l = StringToLocation(chunk, world);
-					AddTeamChunk(l.getBlock().getChunk(), t);
+					t.AddChunkToTeam(l.getBlock().getChunk());
 				}
 			}
 		}
@@ -712,11 +712,6 @@ public class TeamManager extends JavaPlugin {
 		}
 
 		this.saveConfig();
-	}
-
-	public void AddTeamChunk(Chunk c, Team t) {
-		TeamChunks.put(c, t);
-		t.ownedChunks.add(c);
 	}
 
 	public boolean teamOwnsChunk(Chunk c) {
