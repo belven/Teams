@@ -8,6 +8,11 @@ import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.WorldCreator;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -36,6 +41,7 @@ public class TeamManager extends JavaPlugin {
 	private static List<String> MemberCommands = new ArrayList<String>();
 	private static List<String> OfficerCommands = new ArrayList<String>();
 	private static List<String> LeaderCommands = new ArrayList<String>();
+	private HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
 
 	static {
 
@@ -145,6 +151,30 @@ public class TeamManager extends JavaPlugin {
 					t.playersUUIDs.add(tp);
 				}
 			}
+
+			if (getConfig().contains(t.teamName + ".Chunks")
+					&& getConfig().contains(t.teamName + ".World")) {
+				String chunksList = getConfig().getString(
+						t.teamName + ".Chunks");
+				String worldName = getConfig().getString(t.teamName + ".World");
+
+				World world = this.getServer().getWorld(worldName);
+
+				if (world == null) {
+					WorldCreator wc = new WorldCreator(worldName);
+					world = this.getServer().createWorld(wc);
+
+					if (world == null) {
+						return;
+					}
+				}
+				getLogger().info(chunksList);
+				for (String chunk : chunksList.split("@C")) {
+					Location l = StringToLocation(chunk, world);
+					t.ownedChunks.add(l.getBlock().getChunk());
+					TeamChunks.put(l.getChunk(), t);
+				}
+			}
 		}
 	}
 
@@ -181,11 +211,21 @@ public class TeamManager extends JavaPlugin {
 			claimChunk(p);
 			return true;
 
+		case "sc":
+		case "showclaims":
+			showClaims(p);
+			return true;
+
 		case "rc":
 		case "uc":
 		case "unclaim":
 		case "removeclaim":
 			removeClaim(p);
+			return true;
+
+		case "ttc":
+		case "teleporttoclaim":
+			teleportToClaim(p);
 			return true;
 
 		case "ct":
@@ -259,6 +299,68 @@ public class TeamManager extends JavaPlugin {
 			return true;
 		}
 		return false;
+	}
+
+	private void teleportToClaim(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			double lastDist = 0;
+			Location lastLocation = null;
+			for (Chunk c : t.ownedChunks) {
+				Block b = c.getBlock(0, 70, 0);
+
+				if (lastLocation != null) {
+					if (p.getLocation().distance(b.getLocation()) < lastDist) {
+						lastLocation = b.getLocation();
+						lastDist = p.getLocation().distance(b.getLocation());
+					}
+				} else {
+					lastLocation = b.getLocation();
+					lastDist = p.getLocation().distance(b.getLocation());
+				}
+			}
+			
+			p.teleport(lastLocation);
+		}
+	}
+
+	@SuppressWarnings("deprecation")
+	private void showClaims(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			int y = 0;
+
+			if (playersWithBlockChanges.containsKey(p)) {
+				y = playersWithBlockChanges.get(p);
+			} else {
+				y = (int) p.getLocation().getY() + 2;
+			}
+
+			Material m = Material.REDSTONE_BLOCK;
+
+			for (Chunk c : t.ownedChunks) {
+				for (int x = 0; x < 16; x++) {
+					for (int z = 0; z < 16; z++) {
+						if (z == 15 || z == 0 || x == 15 || x == 0) {
+							Block b = c.getBlock(x, y, z);
+							if (!playersWithBlockChanges.containsKey(p)) {
+								p.sendBlockChange(b.getLocation(), m,
+										b.getData());
+							} else {
+								p.sendBlockChange(b.getLocation(), b.getType(),
+										b.getData());
+							}
+						}
+					}
+				}
+			}
+
+			if (!playersWithBlockChanges.containsKey(p)) {
+				playersWithBlockChanges.put(p, y);
+			} else {
+				playersWithBlockChanges.remove(p);
+			}
+		}
 	}
 
 	private void listCommands(Player p) {
@@ -590,6 +692,27 @@ public class TeamManager extends JavaPlugin {
 
 	public boolean teamOwnsChunk(Chunk c) {
 		return TeamChunks.containsKey(c);
+	}
+
+	private Location StringToLocation(String s, World world) {
+		Location tempLoc;
+		String[] strings = s.split(",");
+		int x = Integer.valueOf(strings[0].trim());
+		int y = Integer.valueOf(strings[1].trim());
+		int z = Integer.valueOf(strings[2].trim());
+		tempLoc = new Location(world, x, y, z);
+		return tempLoc;
+	}
+
+	public String LocationToString(Location l) {
+		String locationString = "";
+
+		if (l != null) {
+			locationString = String.valueOf(l.getBlockX()) + ","
+					+ String.valueOf(l.getBlockY()) + ","
+					+ String.valueOf(l.getBlockZ());
+		}
+		return locationString;
 	}
 
 	public void playerLeftTeamLand(Player p) {
