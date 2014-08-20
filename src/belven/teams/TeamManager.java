@@ -27,6 +27,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import belven.teams.PlayerTeamData.CHATLVL;
 import belven.teams.listeners.PlayerListener;
 
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+
 public class TeamManager extends JavaPlugin {
 	public List<Team> CurrentTeams = new ArrayList<Team>();
 	public HashMap<Chunk, Team> TeamChunks = new HashMap<Chunk, Team>();
@@ -47,6 +49,9 @@ public class TeamManager extends JavaPlugin {
 	private static List<String> LeaderCommands = new ArrayList<String>();
 	HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
 	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+	WorldGuardPlugin wg = (WorldGuardPlugin) getServer().getPluginManager()
+			.getPlugin("WorldGuard");
 
 	static {
 		CommandAlisases
@@ -135,6 +140,8 @@ public class TeamManager extends JavaPlugin {
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvents(playerListener, this);
 		RecreateTeams();
+		wg = (WorldGuardPlugin) getServer().getPluginManager().getPlugin(
+				"WorldGuard");
 	}
 
 	public void RecreateTeams() {
@@ -413,17 +420,40 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	private void claimChunk(Player p) {
+		Location l = p.getLocation();
+
 		if (isInATeam(p)) {
-			if (!teamOwnsChunk(p.getLocation().getChunk())) {
-				Team t = getTeam(p);
-				t.ClaimChunk(p, p.getLocation());
+			if (canClaim(p, l.getChunk())) {
+				if (!teamOwnsChunk(l.getChunk())) {
+					Team t = getTeam(p);
+					t.ClaimChunk(p, l);
+				} else {
+					Team t = getChunkOwner(l.getChunk());
+					p.sendMessage(t.teamName + " owns this land");
+				}
 			} else {
-				Team t = getChunkOwner(p.getLocation().getChunk());
-				p.sendMessage(t.teamName + " owns this land");
+				p.sendMessage("You can't claim world guard protected land");
 			}
+
 		} else {
 			p.sendMessage("You must be in a team to do this");
 		}
+	}
+
+	private boolean canClaim(Player p, Chunk c) {
+		if (wg != null) {
+			for (int x = 0; x <= 15; x++) {
+				for (int z = 0; z <= 15; z++) {
+					for (int y = 0; y <= 127; y++) {
+						Block b = c.getBlock(x, y, z);
+						if (!wg.canBuild(p, b)) {
+							return false;
+						}
+					}
+				}
+			}
+		}
+		return true;
 	}
 
 	private String appendMessage(String[] args) {
