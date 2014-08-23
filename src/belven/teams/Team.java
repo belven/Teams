@@ -162,7 +162,7 @@ public class Team {
 
 	public void AddChunkToTeam(Chunk c) {
 		ownedChunks.add(c);
-		plugin.TeamChunks.put(c, this);
+		// plugin.TeamChunks.put(c, this);
 	}
 
 	public void ClaimChunk(Player p, Location l) {
@@ -253,7 +253,7 @@ public class Team {
 
 	public void RemoveChunkFromTeam(Chunk c) {
 		ownedChunks.remove(c);
-		plugin.TeamChunks.remove(c);
+		// plugin.TeamChunks.remove(c);
 	}
 
 	public void removeClaim(Player p, Location l) {
