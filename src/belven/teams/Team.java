@@ -118,7 +118,7 @@ public class Team {
 	public void SavePlayersToConfig() {
 		FileConfiguration conf = plugin.getConfig();
 		for (String p : playersUUIDs.keySet()) {
-			conf.set(teamName + ".Players." + p, playersUUIDs.get(p));
+			conf.set(teamName + ".Players." + p, pData.get(p).toString());
 		}
 	}
 
@@ -181,7 +181,7 @@ public class Team {
 									+ ", you can claim "
 									+ String.valueOf(ClaimsLeft())
 									+ " chunks of land.");
-					
+
 					plugin.getConfig().set(path,
 							dateFormat.format(cal.getTime()));
 

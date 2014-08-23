@@ -602,6 +602,17 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
+	public void RemovePlayerFromTeam(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			t.pData.remove(p);
+
+			if (playersInTeamLand.containsKey(p)) {
+				playersInTeamLand.remove(p);
+			}
+		}
+	}
+
 	public boolean AddPlayerToTeam(Player p, Team t) {
 		if (t != null && p != null) {
 			t.Add(p, TeamRank.MEMBER);
@@ -798,10 +809,4 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
-	public void RemovePlayerFromTeam(Player p) {
-		if (isInATeam(p)) {
-			Team t = getTeam(p);
-			t.pData.remove(p);
-		}
-	}
 }
