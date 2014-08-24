@@ -117,8 +117,8 @@ public class Team {
 
 	public void SavePlayersToConfig() {
 		FileConfiguration conf = plugin.getConfig();
-		for (String p : playersUUIDs.keySet()) {
-			conf.set(teamName + ".Players." + p, pData.get(p).toString());
+		for (String UUID : playersUUIDs.keySet()) {
+			conf.set(teamName + ".Players." + UUID, playersUUIDs.get(UUID));
 		}
 	}
 
@@ -132,10 +132,6 @@ public class Team {
 		plugin.reloadConfig();
 
 		if (!Contains(p)) {
-			if (getMembers().size() == 0) {
-				tr = TeamRank.LEADER;
-			}
-
 			PlayerTeamData data = new PlayerTeamData(tr);
 			pData.put(p, data);
 			plugin.getConfig().set(PlayerPath(p), pData.get(p).toString());

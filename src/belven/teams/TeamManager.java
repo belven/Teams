@@ -31,7 +31,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 public class TeamManager extends JavaPlugin {
 	public List<Team> CurrentTeams = new ArrayList<Team>();
-	//public HashMap<Chunk, Team> TeamChunks = new HashMap<Chunk, Team>();
+	// public HashMap<Chunk, Team> TeamChunks = new HashMap<Chunk, Team>();
 	private final PlayerListener playerListener = new PlayerListener(this);
 	public HashMap<Player, Team> playersInTeamLand = new HashMap<Player, Team>();
 
@@ -744,10 +744,8 @@ public class TeamManager extends JavaPlugin {
 
 	public Team getChunkOwner(Chunk c) {
 		for (Team t : CurrentTeams) {
-			for (Chunk tc : t.ownedChunks) {
-				if (tc.equals(c)) {
-					return t;
-				}
+			if (t.OwnsChunk(c)) {
+				return t;
 			}
 		}
 		return null;
@@ -763,16 +761,12 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public boolean teamOwnsChunk(Chunk c) {
-
 		for (Team t : CurrentTeams) {
-			for (Chunk tc : t.ownedChunks) {
-				if (tc.equals(c)) {
-					return true;
-				}
+			if (t.OwnsChunk(c)) {
+				return true;
 			}
 		}
 		return false;
-		// return TeamChunks.containsKey(c);
 	}
 
 	private Location StringToLocation(String s, World world) {
