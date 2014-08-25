@@ -197,7 +197,7 @@ public class TeamManager extends JavaPlugin {
 				getLogger().info(chunksList);
 				for (String chunk : chunksList.split("@C")) {
 					Location l = StringToLocation(chunk, world);
-					t.AddChunkToTeam(l.getBlock().getChunk());
+					t.AddLocationToTeam(l);
 				}
 			}
 		}
@@ -331,7 +331,7 @@ public class TeamManager extends JavaPlugin {
 			Team t = getTeam(p);
 			double lastDist = 0;
 			Location lastLocation = null;
-			for (Chunk c : t.ownedChunks) {
+			for (Chunk c : t.ownedChunks()) {
 				Block b = c.getBlock(0, 70, 0);
 
 				if (lastLocation != null) {
@@ -368,7 +368,7 @@ public class TeamManager extends JavaPlugin {
 
 			Material m = Material.REDSTONE_BLOCK;
 
-			for (Chunk c : t.ownedChunks) {
+			for (Chunk c : t.ownedChunks()) {
 				for (int x = 0; x < 16; x++) {
 					for (int z = 0; z < 16; z++) {
 						if (z == 15 || z == 0 || x == 15 || x == 0) {
@@ -808,10 +808,11 @@ public class TeamManager extends JavaPlugin {
 		Chunk c = p.getLocation().getChunk();
 		playersInTeamLand.put(p, getChunkOwner(c));
 		String tn = getChunkOwner(c).teamName;
+
 		if (getTeam(p) == getChunkOwner(c)) {
 			String msg = "You entered " + tn + "s land.";
 			p.sendMessage(msg);
-		} else {
+		} else if (!isInATeam(p) || (getTeam(p) != getChunkOwner(c))) {
 			String msg = "You entered " + tn + "s land.";
 			p.sendMessage(msg);
 			msg = p.getName() + " entered your teams land.";

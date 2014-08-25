@@ -21,7 +21,7 @@ import belven.teams.TeamManager.TeamRank;
 public class Team {
 	public String teamName;
 	public HashMap<Player, PlayerTeamData> pData = new HashMap<Player, PlayerTeamData>();
-	public List<Chunk> ownedChunks = new ArrayList<Chunk>();
+	public List<Location> ownedChunkslocations = new ArrayList<Location>();
 	public HashMap<String, String> playersUUIDs = new HashMap<String, String>();
 	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 	Calendar cal = Calendar.getInstance();
@@ -39,6 +39,14 @@ public class Team {
 		teamName = tn;
 		plugin = tm;
 		plugin.CurrentTeams.add(this);
+	}
+
+	public List<Chunk> ownedChunks() {
+		List<Chunk> tempChunks = new ArrayList<Chunk>();
+		for (Location l : ownedChunkslocations) {
+			tempChunks.add(l.getChunk());
+		}
+		return tempChunks;
 	}
 
 	public Team(TeamManager tm, String tn, List<Player> players) {
@@ -144,21 +152,32 @@ public class Team {
 		return teamName + ".Players." + p.getUniqueId().toString();
 	}
 
+	// public boolean OwnsChunk(Chunk c) {
+	// return ownedChunksBlocks.contains(c.getBlock(0, 0, 0));
+	//
+	// // return ownedChunks().contains(c);
+	// }
+
 	public boolean OwnsChunk(Chunk c) {
-		return ownedChunks.contains(c);
+		Block cb = c.getBlock(0, 0, 0);
+		for (Location l : ownedChunkslocations) {
+			if (l.equals(cb.getLocation()))
+				return true;
+		}
+		return false;
+
 	}
 
 	public boolean CanClaim() {
-		return ownedChunks.size() <= getMaxChunks();
+		return ownedChunks().size() <= getMaxChunks();
 	}
 
 	public int ClaimsLeft() {
-		return getMaxChunks() - ownedChunks.size();
+		return getMaxChunks() - ownedChunks().size();
 	}
 
-	public void AddChunkToTeam(Chunk c) {
-		ownedChunks.add(c);
-		// plugin.TeamChunks.put(c, this);
+	public void AddLocationToTeam(Location l) {
+		ownedChunkslocations.add(l);
 	}
 
 	public void ClaimChunk(Player p, Location l) {
@@ -168,8 +187,7 @@ public class Team {
 		if (!OwnsChunk(c)) {
 			if (durationFromLastClaim() <= 0) {
 				if (CanClaim()) {
-
-					AddChunkToTeam(c);
+					AddLocationToTeam(c.getBlock(0, 0, 0).getLocation());
 
 					plugin.SendTeamChat(
 							this,
@@ -198,20 +216,19 @@ public class Team {
 	}
 
 	public String GetChunkWorld() {
-		return ownedChunks.get(0).getWorld().getName();
+		return ownedChunks().get(0).getWorld().getName();
 	}
 
 	public void saveTeamChunks() {
-		if (ownedChunks.size() == 1) {
+		if (ownedChunks().size() == 1) {
 			plugin.getConfig().set(teamName + ".World", GetChunkWorld());
 		}
 
 		StringBuilder sb = new StringBuilder(50);
 
-		for (Chunk oc : ownedChunks) {
-			Block b = oc.getBlock(0, 0, 0);
-			String l = plugin.LocationToString(b.getLocation());
-			sb.append(l + "@C");
+		for (Location l : ownedChunkslocations) {
+			String ls = plugin.LocationToString(l);
+			sb.append(ls + "@C");
 		}
 
 		plugin.getConfig().set(teamName + ".Chunks", sb.toString());
@@ -247,9 +264,8 @@ public class Team {
 		return 1L;
 	}
 
-	public void RemoveChunkFromTeam(Chunk c) {
-		ownedChunks.remove(c);
-		// plugin.TeamChunks.remove(c);
+	public void RemoveLocationFromTeam(Location l) {
+		ownedChunkslocations.remove(l);
 	}
 
 	public void removeClaim(Player p, Location l) {
@@ -259,7 +275,7 @@ public class Team {
 				plugin.showClaims(p);
 			}
 
-			RemoveChunkFromTeam(c);
+			RemoveLocationFromTeam(c.getBlock(0, 0, 0).getLocation());
 
 			plugin.SendTeamChat(this, p.getName()
 					+ " removed claimed land for " + teamName);
