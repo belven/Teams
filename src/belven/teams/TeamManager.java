@@ -50,45 +50,35 @@ public class TeamManager extends JavaPlugin {
 	HashMap<Player, Integer> playersWithBlockChanges = new HashMap<Player, Integer>();
 	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 
-	WorldGuardPlugin wg = (WorldGuardPlugin) getServer().getPluginManager()
-			.getPlugin("WorldGuard");
+	WorldGuardPlugin wg = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
 
 	static {
-		CommandAlisases
-				.put("jointeam", Arrays.asList("jointeam", "join", "jt"));
+		CommandAlisases.put("jointeam", Arrays.asList("jointeam", "join", "jt"));
 
-		CommandAlisases.put("leaveteam",
-				Arrays.asList("leaveteam", "leave", "lt"));
+		CommandAlisases.put("leaveteam", Arrays.asList("leaveteam", "leave", "lt"));
 
-		CommandAlisases.put("list",
-				Arrays.asList("list", "lst", "showteams", "teams"));
+		CommandAlisases.put("list", Arrays.asList("list", "lst", "showteams", "teams"));
 
-		CommandAlisases.put("listmembers",
-				Arrays.asList("listmembers", "lm", "listmem", "members"));
+		CommandAlisases.put("listmembers", Arrays.asList("listmembers", "lm", "listmem", "members"));
 
 		CommandAlisases.put("chat", Arrays.asList("t", "c", "w", "pm"));
 
 		CommandAlisases.put("teamchat", Arrays.asList("teamchat", "tc"));
 		CommandAlisases.put("globalchat", Arrays.asList("globalchat", "gc"));
 
-		CommandAlisases.put("claimchunk",
-				Arrays.asList("claimchunk", "cc", "claim"));
+		CommandAlisases.put("claimchunk", Arrays.asList("claimchunk", "cc", "claim"));
 
-		CommandAlisases.put("removeclaim",
-				Arrays.asList("removeclaim", "rc", "unclaim", "uc"));
+		CommandAlisases.put("removeclaim", Arrays.asList("removeclaim", "rc", "unclaim", "uc"));
 
 		CommandAlisases.put("setopen", Arrays.asList("setopen", "so"));
 
-		CommandAlisases.put("setfriendlyfire",
-				Arrays.asList("setfriendlyfire", "setff", "sff"));
+		CommandAlisases.put("setfriendlyfire", Arrays.asList("setfriendlyfire", "setff", "sff"));
 
-		CommandAlisases.put("removemember",
-				Arrays.asList("removemember", "rm", "kick"));
+		CommandAlisases.put("removemember", Arrays.asList("removemember", "rm", "kick"));
 
 		CommandAlisases.put("setleader", Arrays.asList("setleader", "sl"));
 
-		CommandAlisases.put("removeteam",
-				Arrays.asList("removeteam", "rt", "disband"));
+		CommandAlisases.put("removeteam", Arrays.asList("removeteam", "rt", "disband"));
 
 		// Arrays.asList("jointeam", "join", "jt",
 		// "lt", "leaveteam", "leave", "list", "lst", "showteams",
@@ -140,8 +130,7 @@ public class TeamManager extends JavaPlugin {
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvents(playerListener, this);
 		RecreateTeams();
-		wg = (WorldGuardPlugin) getServer().getPluginManager().getPlugin(
-				"WorldGuard");
+		wg = (WorldGuardPlugin) getServer().getPluginManager().getPlugin("WorldGuard");
 	}
 
 	public void RecreateTeams() {
@@ -150,18 +139,15 @@ public class TeamManager extends JavaPlugin {
 			getLogger().info(s);
 			Team t = new Team(this, s);
 
-			t.friendlyFire = getConfig().getBoolean(
-					t.teamName + ".FriendlyFire");
+			t.friendlyFire = getConfig().getBoolean(t.teamName + ".FriendlyFire");
 			t.isOpen = getConfig().getBoolean(t.teamName + ".Open");
 
-			ConfigurationSection config = getConfig().getConfigurationSection(
-					t.teamName + ".Players");
+			ConfigurationSection config = getConfig().getConfigurationSection(t.teamName + ".Players");
 			if (config != null) {
 				Set<String> teamPlayers = config.getKeys(false);
 				for (String tp : teamPlayers) {
 					if (!t.playersUUIDs.containsKey(tp)) {
-						String rank = getConfig().getString(
-								t.teamName + ".Players." + tp);
+						String rank = getConfig().getString(t.teamName + ".Players." + tp);
 						t.playersUUIDs.put(tp, rank);
 					}
 				}
@@ -170,18 +156,15 @@ public class TeamManager extends JavaPlugin {
 			if (getConfig().contains(s + ".Last Claimed")) {
 				Date lastDate;
 				try {
-					lastDate = dateFormat.parse(getConfig().getString(
-							s + ".Last Claimed"));
+					lastDate = dateFormat.parse(getConfig().getString(s + ".Last Claimed"));
 					t.lastClaimDate = lastDate;
 				} catch (ParseException e) {
 					e.printStackTrace();
 				}
 			}
 
-			if (getConfig().contains(t.teamName + ".Chunks")
-					&& getConfig().contains(t.teamName + ".World")) {
-				String chunksList = getConfig().getString(
-						t.teamName + ".Chunks");
+			if (getConfig().contains(t.teamName + ".Chunks") && getConfig().contains(t.teamName + ".World")) {
+				String chunksList = getConfig().getString(t.teamName + ".Chunks");
 				String worldName = getConfig().getString(t.teamName + ".World");
 
 				World world = this.getServer().getWorld(worldName);
@@ -203,8 +186,7 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
-	public boolean onCommand(CommandSender sender, Command cmd, String label,
-			String[] args) {
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		Player p = (Player) sender;
 		String commandSent = cmd.getName();
 
@@ -374,11 +356,9 @@ public class TeamManager extends JavaPlugin {
 						if (z == 15 || z == 0 || x == 15 || x == 0) {
 							Block b = c.getBlock(x, y, z);
 							if (!playersWithBlockChanges.containsKey(p)) {
-								p.sendBlockChange(b.getLocation(), m,
-										b.getData());
+								p.sendBlockChange(b.getLocation(), m, b.getData());
 							} else {
-								p.sendBlockChange(b.getLocation(), b.getType(),
-										b.getData());
+								p.sendBlockChange(b.getLocation(), b.getType(), b.getData());
 							}
 						}
 					}
@@ -396,11 +376,9 @@ public class TeamManager extends JavaPlugin {
 	private void listCommands(Player p) {
 		if (isInATeam(p)) {
 
-			List<String> commands = TeamRankCommandPerms.get(getTeam(p)
-					.getRank(p));
+			List<String> commands = TeamRankCommandPerms.get(getTeam(p).getRank(p));
 
-			StringBuilder sb = new StringBuilder(commands.size()
-					+ (commands.size() * 3));
+			StringBuilder sb = new StringBuilder(commands.size() + (commands.size() * 3));
 
 			for (String s : commands) {
 				sb.append(s + ", ");
@@ -466,9 +444,7 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public String TeamChatFormat(Player p, Team t) {
-		return ChatColor.GREEN + "["
-				+ TeamRankfriendlyNames.get(t.pData.get(p).teamRank) + "] "
-				+ p.getName() + ": ";
+		return ChatColor.GREEN + "[" + TeamRankfriendlyNames.get(t.pData.get(p).teamRank) + "] " + p.getName() + ": ";
 	}
 
 	public void SendTeamChat(Team t, String msg) {
@@ -490,18 +466,13 @@ public class TeamManager extends JavaPlugin {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			if (t.getRank(p) == TeamRank.LEADER) {
-				if (friendlyFire.containsKey(bool)
-						|| bool.equalsIgnoreCase("toggle")) {
+				if (friendlyFire.containsKey(bool) || bool.equalsIgnoreCase("toggle")) {
 
-					t.friendlyFire = bool.equals("toggle") ? !t.friendlyFire
-							: friendlyFire.get(bool);
+					t.friendlyFire = bool.equals("toggle") ? !t.friendlyFire : friendlyFire.get(bool);
 
 					getConfig().set(t.teamName + ".FriendlyFire", friendlyFire);
-					return "Team "
-							+ t.teamName
-							+ " is now "
-							+ (t.friendlyFire ? "Friendly Fire is now on"
-									: "Friendly Fire is now off");
+					return "Team " + t.teamName + " is now "
+							+ (t.friendlyFire ? "Friendly Fire is now on" : "Friendly Fire is now off");
 				} else {
 					return "Accepts the values on, off, true, false and toggle.";
 				}
@@ -543,8 +514,7 @@ public class TeamManager extends JavaPlugin {
 
 				getConfig().set(t.teamName + ".Open", open);
 
-				return "Team " + t.teamName + " is now "
-						+ (open ? "Open" : "Closed");
+				return "Team " + t.teamName + " is now " + (open ? "Open" : "Closed");
 			} else {
 				return "Only leaders can do this.";
 			}
@@ -595,8 +565,7 @@ public class TeamManager extends JavaPlugin {
 	public void AddPlayerToTeamFromConfig(Player p) {
 		for (Team t : CurrentTeams) {
 			if (t.playersUUIDs.containsKey(p.getUniqueId().toString())) {
-				String rank = getConfig().getString(
-						t.teamName + ".Players." + p.getUniqueId().toString());
+				String rank = getConfig().getString(t.teamName + ".Players." + p.getUniqueId().toString());
 				t.Add(p, TeamRank.valueOf(rank));
 			}
 		}
@@ -642,8 +611,7 @@ public class TeamManager extends JavaPlugin {
 				// is the other player in the team
 				if (t.Contains(otherPlayer)) {
 					t.SetLeader(otherPlayer);
-					return p.getName() + " is now the leader of team "
-							+ t.teamName;
+					return p.getName() + " is now the leader of team " + t.teamName;
 				} else {
 					return p.getName() + " is not in the team " + t.teamName;
 				}
@@ -725,8 +693,7 @@ public class TeamManager extends JavaPlugin {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			for (Player pl : t.getMembers()) {
-				p.sendMessage(pl.getName() + " Rank: "
-						+ TeamRankfriendlyNames.get(t.getRank(pl)));
+				p.sendMessage(pl.getName() + " Rank: " + TeamRankfriendlyNames.get(t.getRank(pl)));
 			}
 		} else {
 			p.sendMessage("You must be in a team to do this");
@@ -783,8 +750,7 @@ public class TeamManager extends JavaPlugin {
 		String locationString = "";
 
 		if (l != null) {
-			locationString = String.valueOf(l.getBlockX()) + ","
-					+ String.valueOf(l.getBlockY()) + ","
+			locationString = String.valueOf(l.getBlockX()) + "," + String.valueOf(l.getBlockY()) + ","
 					+ String.valueOf(l.getBlockZ());
 		}
 		return locationString;

@@ -191,21 +191,17 @@ public class Team {
 
 					plugin.SendTeamChat(
 							this,
-							p.getName() + " claim land for " + teamName
-									+ ", you can claim "
-									+ String.valueOf(ClaimsLeft())
-									+ " chunks of land.");
+							p.getName() + " claim land for " + teamName + ", you can claim "
+									+ String.valueOf(ClaimsLeft()) + " chunks of land.");
 
-					plugin.getConfig().set(path,
-							dateFormat.format(cal.getTime()));
+					plugin.getConfig().set(path, dateFormat.format(cal.getTime()));
 
 					saveTeamChunks();
 				} else {
 					p.sendMessage("Your team cannot claim more land ");
 				}
 			} else {
-				p.sendMessage("You need to wait "
-						+ String.valueOf(durationFromLastClaim())
+				p.sendMessage("You need to wait " + String.valueOf(durationFromLastClaim())
 						+ " hour before you can claim land");
 			}
 		}
@@ -249,8 +245,7 @@ public class Team {
 					lastClaimDate = lastDate;
 				}
 
-				long diff = Calendar.getInstance().getTime().getTime()
-						- lastDate.getTime();
+				long diff = Calendar.getInstance().getTime().getTime() - lastDate.getTime();
 
 				return timeBetweenClaims() - (diff / HOUR);
 			} catch (ParseException e) {
@@ -277,8 +272,7 @@ public class Team {
 
 			RemoveLocationFromTeam(c.getBlock(0, 0, 0).getLocation());
 
-			plugin.SendTeamChat(this, p.getName()
-					+ " removed claimed land for " + teamName);
+			plugin.SendTeamChat(this, p.getName() + " removed claimed land for " + teamName);
 
 			plugin.getConfig().set(teamName + ".Last Claimed", null);
 			saveTeamChunks();
