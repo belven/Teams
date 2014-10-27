@@ -31,7 +31,6 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 
 public class TeamManager extends JavaPlugin {
 	public List<Team> CurrentTeams = new ArrayList<Team>();
-	// public HashMap<Chunk, Team> TeamChunks = new HashMap<Chunk, Team>();
 	private final PlayerListener playerListener = new PlayerListener(this);
 	public HashMap<Player, Team> playersInTeamLand = new HashMap<Player, Team>();
 
@@ -134,9 +133,9 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public void RecreateTeams() {
-		reloadConfig();
 		for (String s : getConfig().getKeys(false)) {
-			getLogger().info(s);
+			getLogger().info(s + " was found!");
+
 			Team t = new Team(this, s);
 
 			t.friendlyFire = getConfig().getBoolean(t.teamName + ".FriendlyFire");
@@ -163,29 +162,40 @@ public class TeamManager extends JavaPlugin {
 				}
 			}
 
-			if (getConfig().contains(t.teamName + ".Chunks") && getConfig().contains(t.teamName + ".World")) {
-				String chunksList = getConfig().getString(t.teamName + ".Chunks");
+			if (getConfig().contains(t.teamName + ".World")) {
 				String worldName = getConfig().getString(t.teamName + ".World");
-
-				World world = this.getServer().getWorld(worldName);
+				World world = getServer().getWorld(worldName);
 
 				if (world == null) {
 					WorldCreator wc = new WorldCreator(worldName);
-					world = this.getServer().createWorld(wc);
+					world = getServer().createWorld(wc);
 
 					if (world == null) {
 						return;
 					}
 				}
-				getLogger().info(chunksList);
-				for (String chunk : chunksList.split("@C")) {
-					Location l = StringToLocation(chunk, world);
-					t.AddLocationToTeam(l);
+
+				if (getConfig().contains(t.teamName + ".Team Home")) {
+					String homeLocation = getConfig().getString(t.teamName + ".Team Home");
+					t.teamHome = StringToLocation(homeLocation, world);
+				}
+
+				if (getConfig().contains(t.teamName + ".Chunks")) {
+					String chunksList = getConfig().getString(t.teamName + ".Chunks");
+					getLogger().info(chunksList);
+
+					for (String chunk : chunksList.split("@C")) {
+						Location l = StringToLocation(chunk, world);
+						t.AddLocationToTeam(l);
+					}
 				}
 			}
+
+			getLogger().info(s + " was created!");
 		}
 	}
 
+	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		Player p = (Player) sender;
 		String commandSent = cmd.getName();
@@ -216,6 +226,11 @@ public class TeamManager extends JavaPlugin {
 		case "claim":
 		case "claimchunk":
 			claimChunk(p);
+			return true;
+
+		case "sm":
+		case "showmessages":
+			showMesssages(p);
 			return true;
 
 		case "sc":
@@ -301,11 +316,49 @@ public class TeamManager extends JavaPlugin {
 
 		case "globalchat":
 		case "gc":
-			getTeam(p).pData.get(p).chatLvl = CHATLVL.Global;
-			p.sendMessage("Chat channel changed to Global");
+			if (isInATeam(p)) {
+				getTeam(p).pData.get(p).chatLvl = CHATLVL.Global;
+				p.sendMessage("Chat channel changed to Global");
+			}
+			return true;
+
+		case "teamhome":
+		case "th":
+			teamHome(p);
+			return true;
+
+		case "setteamhome":
+		case "sth":
+			setTeamHome(p);
 			return true;
 		}
 		return false;
+	}
+
+	private void showMesssages(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			t.getPlayerData(p).setShowChat(!t.getPlayerData(p).showChat);
+			p.sendMessage("Team messages are now " + (t.getPlayerData(p).showChat ? "enabled" : "disabled"));
+		}
+	}
+
+	private void teamHome(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			p.teleport(t.teamHome);
+			p.sendMessage("Teleported to team home");
+		}
+	}
+
+	private void setTeamHome(Player p) {
+		if (isInATeam(p)) {
+			Team t = getTeam(p);
+			if (t.getRank(p) == TeamRank.LEADER) {
+				t.teamHome = p.getLocation();
+				p.sendMessage("You have moved the teams home location");
+			}
+		}
 	}
 
 	private void teleportToClaim(Player p) {
@@ -378,7 +431,7 @@ public class TeamManager extends JavaPlugin {
 
 			List<String> commands = TeamRankCommandPerms.get(getTeam(p).getRank(p));
 
-			StringBuilder sb = new StringBuilder(commands.size() + (commands.size() * 3));
+			StringBuilder sb = new StringBuilder(commands.size() + commands.size() * 3);
 
 			for (String s : commands) {
 				sb.append(s + ", ");
@@ -646,6 +699,7 @@ public class TeamManager extends JavaPlugin {
 		} else {
 			return "Team " + tn + " already exists";
 		}
+
 	}
 
 	public boolean deosTeamExist(String tn) {
@@ -739,9 +793,20 @@ public class TeamManager extends JavaPlugin {
 	private Location StringToLocation(String s, World world) {
 		Location tempLoc;
 		String[] strings = s.split(",");
-		int x = Integer.valueOf(strings[0].trim());
-		int y = Integer.valueOf(strings[1].trim());
-		int z = Integer.valueOf(strings[2].trim());
+
+		int x = 0;
+		int y = 0;
+		int z = 0;
+
+		try {
+			x = Integer.valueOf(strings[0].trim());
+			y = Integer.valueOf(strings[1].trim());
+			z = Integer.valueOf(strings[2].trim());
+
+		} catch (NumberFormatException e) {
+
+		}
+
 		tempLoc = new Location(world, x, y, z);
 		return tempLoc;
 	}
@@ -759,8 +824,10 @@ public class TeamManager extends JavaPlugin {
 	public void playerLeftTeamLand(Player p) {
 		String tn = playersInTeamLand.get(p).teamName;
 		if (getTeam(p) == playersInTeamLand.get(p)) {
-			String msg = "You left " + tn + "s land.";
-			p.sendMessage(msg);
+			if (getTeam(p).getPlayerData(p).showChat) {
+				String msg = "You left " + tn + "s land.";
+				p.sendMessage(msg);
+			}
 		} else {
 			String msg = "You left " + tn + "s land.";
 			p.sendMessage(msg);
@@ -776,14 +843,15 @@ public class TeamManager extends JavaPlugin {
 		String tn = getChunkOwner(c).teamName;
 
 		if (getTeam(p) == getChunkOwner(c)) {
-			String msg = "You entered " + tn + "s land.";
-			p.sendMessage(msg);
-		} else if (!isInATeam(p) || (getTeam(p) != getChunkOwner(c))) {
+			if (getTeam(p).getPlayerData(p).showChat) {
+				String msg = "You entered " + tn + "s land.";
+				p.sendMessage(msg);
+			}
+		} else if (!isInATeam(p) || getTeam(p) != getChunkOwner(c)) {
 			String msg = "You entered " + tn + "s land.";
 			p.sendMessage(msg);
 			msg = p.getName() + " entered your teams land.";
 			SendTeamChat(getChunkOwner(c), msg);
 		}
 	}
-
 }

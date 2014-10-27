@@ -23,13 +23,14 @@ public class Team {
 	public HashMap<Player, PlayerTeamData> pData = new HashMap<Player, PlayerTeamData>();
 	public List<Location> ownedChunkslocations = new ArrayList<Location>();
 	public HashMap<String, String> playersUUIDs = new HashMap<String, String>();
-	DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-	Calendar cal = Calendar.getInstance();
+	public Location teamHome;
+	private DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+	private Calendar cal = Calendar.getInstance();
 
 	public TeamManager plugin;
 	public boolean friendlyFire = false;
 	public boolean isOpen = true;
-	Date lastClaimDate = new Date();
+	public Date lastClaimDate = new Date();
 
 	private static final int SECOND = 1000;
 	private static final int MINUTE = 60 * SECOND;
@@ -113,6 +114,10 @@ public class Team {
 		conf.set(teamName + ".Open", isOpen);
 		conf.set(teamName + ".FriendlyFire", friendlyFire);
 
+		if (teamHome != null) {
+			conf.set(teamName + ".Team Home", plugin.LocationToString(teamHome));
+		}
+
 		if (lastClaimDate != null) {
 			String date = dateFormat.format(lastClaimDate);
 			conf.set(teamName + ".Last Claimed", date);
@@ -134,6 +139,10 @@ public class Team {
 		plugin.getConfig().set(teamName, null);
 		plugin.CurrentTeams.remove(this);
 		plugin.saveConfig();
+	}
+
+	public PlayerTeamData getPlayerData(Player p) {
+		return pData.get(p);
 	}
 
 	public void Add(Player p, TeamRank tr) {
@@ -161,19 +170,24 @@ public class Team {
 	public boolean OwnsChunk(Chunk c) {
 		Block cb = c.getBlock(0, 0, 0);
 		for (Location l : ownedChunkslocations) {
-			if (l.equals(cb.getLocation()))
+			if (l.equals(cb.getLocation())) {
 				return true;
+			}
 		}
 		return false;
 
 	}
 
 	public boolean CanClaim() {
-		return ownedChunks().size() <= getMaxChunks();
+		return ClaimsLeft() > 0;
 	}
 
 	public int ClaimsLeft() {
 		return getMaxChunks() - ownedChunks().size();
+	}
+
+	public int getMaxChunks() {
+		return playersUUIDs.size() * 7;
 	}
 
 	public void AddLocationToTeam(Location l) {
@@ -184,31 +198,25 @@ public class Team {
 		Chunk c = l.getChunk();
 		String path = teamName + ".Last Claimed";
 
-		if (!OwnsChunk(c)) {
-			if (durationFromLastClaim() <= 0) {
-				if (CanClaim()) {
-					AddLocationToTeam(c.getBlock(0, 0, 0).getLocation());
+		if (!OwnsChunk(c) && CanClaim()) {
+			// if (durationFromLastClaim() <= 0) {
+			AddLocationToTeam(c.getBlock(0, 0, 0).getLocation());
 
-					plugin.SendTeamChat(
-							this,
-							p.getName() + " claim land for " + teamName + ", you can claim "
-									+ String.valueOf(ClaimsLeft()) + " chunks of land.");
+			plugin.SendTeamChat(this,
+					p.getName() + " claim land for " + teamName + ", you can claim " + String.valueOf(ClaimsLeft())
+							+ " chunks of land.");
 
-					plugin.getConfig().set(path, dateFormat.format(cal.getTime()));
+			plugin.getConfig().set(path, dateFormat.format(cal.getTime()));
 
-					saveTeamChunks();
-				} else {
-					p.sendMessage("Your team cannot claim more land ");
-				}
-			} else {
-				p.sendMessage("You need to wait " + String.valueOf(durationFromLastClaim())
-						+ " hour before you can claim land");
-			}
+			saveTeamChunks();
+			// } else {
+			// p.sendMessage("You need to wait " +
+			// String.valueOf(durationFromLastClaim())
+			// + " hour before you can claim land");
+			// }
+		} else {
+			p.sendMessage("Your team cannot claim more land ");
 		}
-	}
-
-	public int getMaxChunks() {
-		return playersUUIDs.size() * 7;
 	}
 
 	public String GetChunkWorld() {
@@ -218,6 +226,8 @@ public class Team {
 	public void saveTeamChunks() {
 		if (ownedChunks().size() == 1) {
 			plugin.getConfig().set(teamName + ".World", GetChunkWorld());
+		} else if (teamHome != null) {
+			plugin.getConfig().set(teamName + ".World", teamHome.getWorld().getName());
 		}
 
 		StringBuilder sb = new StringBuilder(50);
@@ -247,7 +257,7 @@ public class Team {
 
 				long diff = Calendar.getInstance().getTime().getTime() - lastDate.getTime();
 
-				return timeBetweenClaims() - (diff / HOUR);
+				return timeBetweenClaims() - diff / HOUR;
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}

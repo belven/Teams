@@ -11,9 +11,7 @@ public class PlayerTeamData {
 
 	public TeamRank teamRank;
 	public CHATLVL chatLvl = CHATLVL.Global;
-
-	public PlayerTeamData() {
-	}
+	public boolean showChat = true;
 
 	public PlayerTeamData(TeamRank t) {
 		teamRank = t;
@@ -21,6 +19,10 @@ public class PlayerTeamData {
 
 	public PlayerTeamData(String s) {
 		fromString(s);
+	}
+
+	public void setShowChat(boolean value) {
+		showChat = value;
 	}
 
 	@Override
