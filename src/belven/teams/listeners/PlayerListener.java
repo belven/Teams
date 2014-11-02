@@ -42,8 +42,9 @@ public class PlayerListener implements Listener {
 				Chunk c = event.getClickedBlock().getChunk();
 				Player p = event.getPlayer();
 				if (plugin.teamOwnsChunk(c)) {
-					if (!plugin.isInATeam(p) || (plugin.getTeam(p) != plugin.getChunkOwner(c))) {
+					if (!plugin.isInATeam(p) || plugin.getTeam(p) != plugin.getChunkOwner(c)) {
 						event.setCancelled(true);
+						p.sendMessage("You can't use blocks that your team deson't own");
 					}
 				}
 			}
@@ -67,7 +68,7 @@ public class PlayerListener implements Listener {
 		Chunk c = event.getBlock().getChunk();
 		Player p = event.getPlayer();
 		if (plugin.teamOwnsChunk(c)) {
-			if (!plugin.isInATeam(p) || (plugin.getTeam(p) != plugin.getChunkOwner(c))) {
+			if (!plugin.isInATeam(p) || plugin.getTeam(p) != plugin.getChunkOwner(c)) {
 				event.setCancelled(true);
 				p.sendMessage("You can't break blocks that your team deson't own");
 			}
@@ -79,7 +80,7 @@ public class PlayerListener implements Listener {
 		Chunk c = event.getBlock().getChunk();
 		Player p = event.getPlayer();
 		if (plugin.teamOwnsChunk(c)) {
-			if (!plugin.isInATeam(p) || (plugin.getTeam(p) != plugin.getChunkOwner(c))) {
+			if (!plugin.isInATeam(p) || plugin.getTeam(p) != plugin.getChunkOwner(c)) {
 				event.setCancelled(true);
 				p.sendMessage("You can't place blocks in land your team deson't own");
 			}
@@ -91,12 +92,21 @@ public class PlayerListener implements Listener {
 		Player p = event.getPlayer();
 		Chunk c = p.getLocation().getChunk();
 		TeamManager tm = plugin;
+		Team owningTeam = tm.getChunkOwner(c);
 
-		if (tm.teamOwnsChunk(c) && !tm.playersInTeamLand.containsKey(p)) {
-			tm.playerEnteredTeamLand(p);
-		} else if (!tm.teamOwnsChunk(c) && tm.playersInTeamLand.containsKey(p)) {
+		// Someone owns the chunk
+		if (owningTeam != null) {
+			if (tm.isPlayerInTeamLand(p)) {
+				if (!tm.getPlayersCurrentTeamLand(p).equals(owningTeam)) {
+					tm.playerLeftTeamLand(p);
+				}
+			} else {
+				tm.playerEnteredTeamLand(p);
+			}
+		} else {
 			tm.playerLeftTeamLand(p);
 		}
+
 	}
 
 	@EventHandler

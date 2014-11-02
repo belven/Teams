@@ -42,6 +42,11 @@ public class Team {
 		plugin.CurrentTeams.add(this);
 	}
 
+	@Override
+	public boolean equals(Object other) {
+		return other instanceof Team ? teamName == ((Team) other).teamName : false;
+	}
+
 	public List<Chunk> ownedChunks() {
 		List<Chunk> tempChunks = new ArrayList<Chunk>();
 		for (Location l : ownedChunkslocations) {

@@ -361,6 +361,10 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
+	public boolean isPlayerInTeamLand(Player p) {
+		return playersInTeamLand.containsKey(p);
+	}
+
 	private void teleportToClaim(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
@@ -821,37 +825,40 @@ public class TeamManager extends JavaPlugin {
 		return locationString;
 	}
 
+	public Team getPlayersCurrentTeamLand(Player p) {
+		return playersInTeamLand.get(p);
+	}
+
 	public void playerLeftTeamLand(Player p) {
-		String tn = playersInTeamLand.get(p).teamName;
-		if (getTeam(p) == playersInTeamLand.get(p)) {
-			if (getTeam(p).getPlayerData(p).showChat) {
-				String msg = "You left " + tn + "s land.";
-				p.sendMessage(msg);
-			}
-		} else {
-			String msg = "You left " + tn + "s land.";
+		Team playersTeam = getTeam(p);
+
+		if (playersTeam.getPlayerData(p).showChat) {
+			String msg = "You left " + getPlayersCurrentTeamLand(p).teamName + "s land.";
 			p.sendMessage(msg);
-			msg = p.getName() + " left your teams land.";
-			SendTeamChat(playersInTeamLand.get(p), msg);
 		}
+
+		if (!playersTeam.equals(getPlayersCurrentTeamLand(p))) {
+			String msg = p.getName() + " left your teams land.";
+			SendTeamChat(getPlayersCurrentTeamLand(p), msg);
+		}
+
 		playersInTeamLand.remove(p);
 	}
 
 	public void playerEnteredTeamLand(Player p) {
 		Chunk c = p.getLocation().getChunk();
-		playersInTeamLand.put(p, getChunkOwner(c));
-		String tn = getChunkOwner(c).teamName;
+		Team owningTeam = getChunkOwner(c);
+		playersInTeamLand.put(p, owningTeam);
+		Team playersTeam = getTeam(p);
 
-		if (getTeam(p) == getChunkOwner(c)) {
-			if (getTeam(p).getPlayerData(p).showChat) {
-				String msg = "You entered " + tn + "s land.";
-				p.sendMessage(msg);
-			}
-		} else if (!isInATeam(p) || getTeam(p) != getChunkOwner(c)) {
-			String msg = "You entered " + tn + "s land.";
+		if (playersTeam.getPlayerData(p).showChat) {
+			String msg = "You entered " + getPlayersCurrentTeamLand(p).teamName + "s land.";
 			p.sendMessage(msg);
-			msg = p.getName() + " entered your teams land.";
-			SendTeamChat(getChunkOwner(c), msg);
+		}
+
+		if (owningTeam != null && !playersTeam.equals(owningTeam)) {
+			String msg = p.getName() + " entered your teams land.";
+			SendTeamChat(getPlayersCurrentTeamLand(p), msg);
 		}
 	}
 }
