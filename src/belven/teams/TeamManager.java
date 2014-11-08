@@ -21,9 +21,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import resources.Group;
 import belven.teams.PlayerTeamData.CHATLVL;
 import belven.teams.listeners.PlayerListener;
 
@@ -505,9 +507,11 @@ public class TeamManager extends JavaPlugin {
 	}
 
 	public void SendTeamChat(Team t, String msg) {
-		if (msg != "") {
+		if (msg != null && msg != "" && t != null) {
 			for (Player pl : t.getMembers()) {
-				pl.sendMessage(msg);
+				if (pl != null) {
+					pl.sendMessage(msg);
+				}
 			}
 		}
 	}
@@ -628,10 +632,19 @@ public class TeamManager extends JavaPlugin {
 		}
 	}
 
+	public void setPlayerMetaData(Team t) {
+		List<Player> members = new ArrayList<>();
+		members.addAll(t.getMembers());
+		for (Player p : members) {
+			p.setMetadata("InTeam", new FixedMetadataValue(this, new Group(members, t.teamName)));
+		}
+	}
+
 	public void RemovePlayerFromTeam(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
 			t.pData.remove(p);
+			p.removeMetadata("InTeam", this);
 
 			if (playersInTeamLand.containsKey(p)) {
 				playersInTeamLand.remove(p);
@@ -831,13 +844,14 @@ public class TeamManager extends JavaPlugin {
 
 	public void playerLeftTeamLand(Player p) {
 		Team playersTeam = getTeam(p);
+		Team teamLand = getPlayersCurrentTeamLand(p);
 
-		if (playersTeam.getPlayerData(p).showChat) {
-			String msg = "You left " + getPlayersCurrentTeamLand(p).teamName + "s land.";
+		if (playersTeam != null && playersTeam.getPlayerData(p).showChat && teamLand != null) {
+			String msg = "You left " + teamLand.teamName + "s land.";
 			p.sendMessage(msg);
 		}
 
-		if (!playersTeam.equals(getPlayersCurrentTeamLand(p))) {
+		if (!playersTeam.equals(teamLand)) {
 			String msg = p.getName() + " left your teams land.";
 			SendTeamChat(getPlayersCurrentTeamLand(p), msg);
 		}

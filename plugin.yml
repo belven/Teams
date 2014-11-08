@@ -1,7 +1,7 @@
 name: BelvensTeams
 main: belven.teams.TeamManager
 version: 1
-depend: [WorldGuard]
+depend: [WorldGuard,Resources]
 
 commands:
    bt:

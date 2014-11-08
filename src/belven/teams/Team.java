@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -80,7 +81,7 @@ public class Team {
 		pData.remove(p);
 		plugin.reloadConfig();
 		plugin.getConfig().set(PlayerPath(p), null);
-		if (getMembers().size() == 0) {
+		if (playersUUIDs.size() == 0) {
 			RemoveTeam();
 		}
 
@@ -88,7 +89,7 @@ public class Team {
 	}
 
 	public Set<Player> getMembers() {
-		return pData.keySet();
+		return pData.keySet() != null ? pData.keySet() : new HashSet<Player>();
 	}
 
 	public TeamRank getRank(Player p) {
@@ -159,6 +160,7 @@ public class Team {
 			plugin.getConfig().set(PlayerPath(p), pData.get(p).toString());
 			playersUUIDs.put(p.getUniqueId().toString(), tr.toString());
 			plugin.saveConfig();
+			plugin.setPlayerMetaData(this);
 		}
 	}
 
