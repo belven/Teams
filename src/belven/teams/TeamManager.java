@@ -17,6 +17,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -415,7 +416,9 @@ public class TeamManager extends JavaPlugin {
 						if (z == 15 || z == 0 || x == 15 || x == 0) {
 							Block b = c.getBlock(x, y, z);
 							if (!playersWithBlockChanges.containsKey(p)) {
-								p.sendBlockChange(b.getLocation(), m, b.getData());
+								if (changeBlock(b, t)) {
+									p.sendBlockChange(b.getLocation(), m, b.getData());
+								}
 							} else {
 								p.sendBlockChange(b.getLocation(), b.getType(), b.getData());
 							}
@@ -430,6 +433,29 @@ public class TeamManager extends JavaPlugin {
 				playersWithBlockChanges.remove(p);
 			}
 		}
+	}
+
+	public boolean changeBlock(Block b, Team t) {
+		Block n = b.getRelative(BlockFace.NORTH);
+		Block e = b.getRelative(BlockFace.EAST);
+		Block s = b.getRelative(BlockFace.SOUTH);
+		Block w = b.getRelative(BlockFace.WEST);
+
+		if (!t.OwnsChunk(n.getChunk())) {
+			return true;
+		} else if (!t.OwnsChunk(e.getChunk())) {
+			return true;
+		} else if (!t.OwnsChunk(s.getChunk())) {
+			return true;
+		} else if (!t.OwnsChunk(w.getChunk())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean sameChunk(Chunk c1, Chunk c2) {
+		return c1 == c2;
 	}
 
 	private void listCommands(Player p) {
