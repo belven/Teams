@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.bukkit.Chunk;
@@ -78,14 +79,46 @@ public class Team {
 	}
 
 	public void RemoveMember(Player p) {
+		if (pData.get(p).teamRank == TeamRank.LEADER) {
+			for (String uuid : playersUUIDs.keySet()) {
+				if (!uuid.equals(p.getUniqueId().toString())) {
+					playersUUIDs.put(uuid, TeamRank.LEADER.toString());
+				}
+			}
+		}
+
 		pData.remove(p);
 		plugin.reloadConfig();
 		plugin.getConfig().set(PlayerPath(p), null);
+		playersUUIDs.remove(p.getUniqueId().toString());
+
 		if (playersUUIDs.size() == 0) {
 			RemoveTeam();
 		}
 
 		plugin.saveConfig();
+	}
+
+	public void checkIfHasLeader() {
+		boolean hasLeader = false;
+		for (Entry<String, String> uuid : playersUUIDs.entrySet()) {
+			if (uuid.getValue().equals(TeamRank.LEADER.toString())) {
+				hasLeader = true;
+			}
+		}
+
+		if (!hasLeader) {
+			for (Entry<String, String> uuid : playersUUIDs.entrySet()) {
+				playersUUIDs.put(uuid.getKey(), TeamRank.LEADER.toString());
+				plugin.getConfig().set(uuid.getKey(), TeamRank.LEADER.toString());
+				break;
+			}
+		}
+	}
+
+	public void tempRemoveMember(Player p) {
+		pData.remove(p);
+		p.removeMetadata("InTeam", plugin);
 	}
 
 	public Set<Player> getMembers() {

@@ -153,6 +153,8 @@ public class TeamManager extends JavaPlugin {
 						t.playersUUIDs.put(tp, rank);
 					}
 				}
+
+				t.checkIfHasLeader();
 			}
 
 			if (getConfig().contains(s + ".Last Claimed")) {
@@ -669,8 +671,7 @@ public class TeamManager extends JavaPlugin {
 	public void RemovePlayerFromTeam(Player p) {
 		if (isInATeam(p)) {
 			Team t = getTeam(p);
-			t.pData.remove(p);
-			p.removeMetadata("InTeam", this);
+			t.tempRemoveMember(p);
 
 			if (playersInTeamLand.containsKey(p)) {
 				playersInTeamLand.remove(p);
@@ -877,7 +878,7 @@ public class TeamManager extends JavaPlugin {
 			p.sendMessage(msg);
 		}
 
-		if (!playersTeam.equals(teamLand)) {
+		if (playersTeam != null && !playersTeam.equals(teamLand)) {
 			String msg = p.getName() + " left your teams land.";
 			SendTeamChat(getPlayersCurrentTeamLand(p), msg);
 		}
