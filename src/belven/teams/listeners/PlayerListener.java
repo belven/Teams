@@ -16,7 +16,7 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import resources.MaterialFunctions;
+import belven.resources.MaterialFunctions;
 import belven.teams.PlayerTeamData.CHATLVL;
 import belven.teams.Team;
 import belven.teams.TeamManager;

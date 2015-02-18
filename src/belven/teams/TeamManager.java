@@ -26,7 +26,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import resources.Group;
+import belven.resources.Group;
 import belven.teams.PlayerTeamData.CHATLVL;
 import belven.teams.listeners.PlayerListener;
 

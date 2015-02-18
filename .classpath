@@ -8,6 +8,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/Users/sam/Desktop/BukkitServer/plugins/WorldGuard.jar"/>
-	<classpathentry kind="lib" path="/BelvensResources/bin"/>
+	<classpathentry kind="lib" path="C:/Users/sam/Desktop/BukkitServer/plugins/BelvensResources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
